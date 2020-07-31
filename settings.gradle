@@ -1,0 +1,3 @@
+rootProject.name = 'cloud9'
+include 'core'
+
