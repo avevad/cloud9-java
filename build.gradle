@@ -1,5 +1,5 @@
 allprojects{
-    group = 'com.avevad'
+    group = 'com.avevad.cloud9'
     version = '0.1-SNAPSHOT'
 }
 
