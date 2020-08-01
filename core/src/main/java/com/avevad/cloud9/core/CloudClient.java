@@ -1,8 +1,6 @@
 package com.avevad.cloud9.core;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -114,35 +112,25 @@ public final class CloudClient {
         }
     }
 
-
-
-    public static final class Node {
-        private final byte[] id;
-
-        private Node(byte[] id) {
-            this.id = id;
-        }
-
-        public static Node bufRecvNode(byte[] buffer, int offset) {
-            return new Node(Arrays.copyOfRange(buffer, offset, offset + NODE_ID_SIZE));
-        }
-
-        public static Node recvNode(AbstractConnection connection) throws IOException {
-            byte[] buffer = new byte[NODE_ID_SIZE];
-            recvExact(connection, buffer, 0, NODE_ID_SIZE);
-            return bufRecvNode(buffer, 0);
-        }
-
-        public void bufSendNode(byte[] buffer, int offset) {
-            System.arraycopy(id, 0, buffer, offset, NODE_ID_SIZE);
-        }
-
-        public void sendNode(AbstractConnection connection) throws IOException {
-            byte[] buffer = new byte[NODE_ID_SIZE];
-            bufSendNode(buffer, 0);
-            sendExact(connection, buffer, 0, NODE_ID_SIZE);;
+    public Node getHome(String user) throws IOException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_GET_HOME);
+            sendInt64(connection, stringSize(user));
+            sendString(connection, user);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+            return Node.bufRecvNode(response.body, 0);
         }
     }
+
+    public Node getHome() throws IOException {
+        return getHome("");
+    }
+
 
     public interface PasswordCallback {
         String promptPassword();
@@ -163,5 +151,12 @@ public final class CloudClient {
         }
     }
 
+    public static final class RequestException extends RuntimeException {
+        public final short status;
 
+        public RequestException(short status) {
+            super("request status code " + status);
+            this.status = status;
+        }
+    }
 }

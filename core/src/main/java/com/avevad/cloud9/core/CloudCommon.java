@@ -1,5 +1,12 @@
 package com.avevad.cloud9.core;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
+import static com.avevad.cloud9.core.AbstractConnection.Helper.recvExact;
+import static com.avevad.cloud9.core.AbstractConnection.Helper.sendExact;
+
 public final class CloudCommon {
     private CloudCommon() {
     }
@@ -77,4 +84,60 @@ public final class CloudCommon {
     public static final short REQUEST_ERR_READ_BLOCK_IS_TOO_LARGE = 16;
     public static final short REQUEST_SWITCH_OK = 17;
     public static final short REQUEST_ERR_DIRECTORY_IS_NOT_EMPTY = 18;
+
+    public static final class Node {
+        private final byte[] id;
+
+        private Node(byte[] id) {
+            this.id = id;
+        }
+
+        public static Node bufRecvNode(byte[] buffer, int offset) {
+            return new Node(Arrays.copyOfRange(buffer, offset, offset + NODE_ID_SIZE));
+        }
+
+        public static Node recvNode(AbstractConnection connection) throws IOException {
+            byte[] buffer = new byte[NODE_ID_SIZE];
+            recvExact(connection, buffer, 0, NODE_ID_SIZE);
+            return bufRecvNode(buffer, 0);
+        }
+
+        public void bufSendNode(byte[] buffer, int offset) {
+            System.arraycopy(id, 0, buffer, offset, NODE_ID_SIZE);
+        }
+
+        public void sendNode(AbstractConnection connection) throws IOException {
+            byte[] buffer = new byte[NODE_ID_SIZE];
+            bufSendNode(buffer, 0);
+            sendExact(connection, buffer, 0, NODE_ID_SIZE);
+        }
+
+        public static Node fromString(String id) {
+            if (id.length() != NODE_ID_SIZE) throw new IllegalArgumentException("invalid node id size");
+            if (!IntStream.range(0, NODE_ID_SIZE).mapToObj(id::charAt).
+                    allMatch(c -> (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')))
+                throw new IllegalArgumentException("invalid character in id");
+            byte[] bytes = new byte[NODE_ID_SIZE];
+            for (int i = 0; i < NODE_ID_SIZE; i++) {
+                char c1 = id.charAt(i * 2);
+                char c2 = id.charAt(i * 2 + 1);
+                int b1 = (c1 >= '0' && c1 <= '9') ? (c1 - '0') : (c1 - 'a' + 0xA);
+                int b2 = (c2 >= '0' && c2 <= '9') ? (c2 - '0') : (c2 - 'a' + 0xA);
+                bytes[i] = (byte) ((b1 << 4) | b2);
+            }
+            return new Node(bytes);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder(NODE_ID_SIZE * 2);
+            for (byte b : id) {
+                int b1 = (b & 0xF0) >> 4;
+                int b2 = (b & 0x0F);
+                builder.append((char) (b1 < 0xA ? ('0' + b1) : ('a' + (b1 - 0xA))));
+                builder.append((char) (b2 < 0xA ? ('0' + b2) : ('a' + (b2 - 0xA))));
+            }
+            return builder.toString();
+        }
+    }
 }
