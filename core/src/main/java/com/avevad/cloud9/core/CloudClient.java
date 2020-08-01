@@ -131,9 +131,36 @@ public final class CloudClient {
         return getHome("");
     }
 
+    public void listDirectory(Node node, DirectoryEntryCallback callback) throws IOException {
+        ServerResponse response;
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_LIST_DIRECTORY);
+            sendInt64(connection, NODE_ID_SIZE);
+            node.sendNode(connection);
+            response = waitResponse(lastId);
+            if(response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+        }
+        int pos = 0;
+        while(pos < response.size) {
+            Node child = Node.bufRecvNode(response.body, pos);
+            pos += NODE_ID_SIZE;
+            int nameSize = 0xFF & response.body[pos];
+            pos++;
+            String name = bufRecvString(response.body, pos, nameSize);
+            pos += nameSize;
+            callback.call(child, name);
+        }
+    }
 
     public interface PasswordCallback {
         String promptPassword();
+    }
+
+    public interface DirectoryEntryCallback {
+        void call(Node node, String name);
     }
 
     public static final class ProtocolException extends RuntimeException {
