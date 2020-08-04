@@ -29,7 +29,7 @@ public final class CloudClient {
     private final Object apiLock = new Object();
     private int lastId = 0;
 
-    public CloudClient(AbstractConnection connection, String login, PasswordCallback passwordCallback) throws IOException {
+    public CloudClient(AbstractConnection connection, String login, PasswordCallback passwordCallback) throws IOException, InitException {
         listener = new Thread(this::listenerRoutine);
         this.connection = connection;
         negotiate();
@@ -112,7 +112,7 @@ public final class CloudClient {
         }
     }
 
-    public Node getHome(String user) throws IOException {
+    public Node getHome(String user) throws IOException, RequestException {
         synchronized (apiLock) {
             sendInt32(connection, ++lastId);
             sendInt16(connection, REQUEST_CMD_GET_HOME);
@@ -127,11 +127,11 @@ public final class CloudClient {
         }
     }
 
-    public Node getHome() throws IOException {
+    public Node getHome() throws IOException, RequestException {
         return getHome("");
     }
 
-    public void listDirectory(Node node, DirectoryEntryCallback callback) throws IOException {
+    public void listDirectory(Node node, DirectoryEntryCallback callback) throws IOException, RequestException {
         ServerResponse response;
         synchronized (apiLock) {
             sendInt32(connection, ++lastId);
@@ -155,7 +155,7 @@ public final class CloudClient {
         }
     }
 
-    public Node getNodeParent(Node node) throws IOException {
+    public Node getNodeParent(Node node) throws IOException, RequestException {
         synchronized (apiLock) {
             sendInt32(connection, ++lastId);
             sendInt16(connection, REQUEST_CMD_GET_PARENT);
@@ -169,7 +169,7 @@ public final class CloudClient {
         }
     }
 
-    public void makeNode(Node parent, String name, NodeType type) throws IOException {
+    public void makeNode(Node parent, String name, NodeType type) throws IOException, RequestException {
         synchronized (apiLock) {
             int nameSize = stringSize(name);
             sendInt32(connection, ++lastId);
@@ -181,13 +181,13 @@ public final class CloudClient {
             sendByte(connection, type.id);
             connection.flush();
             ServerResponse response = waitResponse(lastId);
-            if(response.status != REQUEST_OK) {
+            if (response.status != REQUEST_OK) {
                 throw new RequestException(response.status);
             }
         }
     }
 
-    public String getNodeOwner(Node node) throws IOException {
+    public String getNodeOwner(Node node) throws IOException, RequestException {
         synchronized (apiLock) {
             sendInt32(connection, ++lastId);
             sendInt16(connection, REQUEST_CMD_GET_NODE_OWNER);
@@ -195,10 +195,40 @@ public final class CloudClient {
             node.sendNode(connection);
             connection.flush();
             ServerResponse response = waitResponse(lastId);
-            if(response.status != REQUEST_OK) {
+            if (response.status != REQUEST_OK) {
                 throw new RequestException(response.status);
             }
             return bufRecvString(response.body, 0, response.size);
+        }
+    }
+
+    public byte openFD(Node node, byte mode) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_FD_OPEN);
+            sendInt64(connection, NODE_ID_SIZE + 1);
+            node.sendNode(connection);
+            sendByte(connection, mode);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+            return response.body[0];
+        }
+    }
+
+    public void closeFD(byte fd) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_FD_CLOSE);
+            sendInt64(connection, 1);
+            sendByte(connection, fd);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
         }
     }
 
@@ -207,7 +237,7 @@ public final class CloudClient {
     }
 
     public interface DirectoryEntryCallback {
-        void call(Node node, String name);
+        void call(Node node, String name) throws IOException, RequestException;
     }
 
     public static final class ProtocolException extends RuntimeException {
@@ -216,7 +246,7 @@ public final class CloudClient {
         }
     }
 
-    public static final class InitException extends RuntimeException {
+    public static final class InitException extends Exception {
         public final short status;
 
         public InitException(short status) {
@@ -225,7 +255,7 @@ public final class CloudClient {
         }
     }
 
-    public static final class RequestException extends RuntimeException {
+    public static final class RequestException extends Exception {
         public final short status;
 
         public RequestException(short status) {
