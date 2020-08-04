@@ -85,6 +85,9 @@ public final class CloudCommon {
     public static final short REQUEST_SWITCH_OK = 17;
     public static final short REQUEST_ERR_DIRECTORY_IS_NOT_EMPTY = 18;
 
+    public static final byte FD_MODE_READ = 0b10;
+    public static final byte FD_MODE_WRITE = 0b01;
+
     public static final class Node {
         private final byte[] id;
 

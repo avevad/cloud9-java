@@ -169,7 +169,7 @@ public final class CloudClient {
         }
     }
 
-    public void makeNode(Node parent, String name, NodeType type) throws IOException, RequestException {
+    public Node makeNode(Node parent, String name, NodeType type) throws IOException, RequestException {
         synchronized (apiLock) {
             int nameSize = stringSize(name);
             sendInt32(connection, ++lastId);
@@ -184,6 +184,7 @@ public final class CloudClient {
             if (response.status != REQUEST_OK) {
                 throw new RequestException(response.status);
             }
+            return Node.bufRecvNode(response.body, 0);
         }
     }
 
@@ -224,6 +225,38 @@ public final class CloudClient {
             sendInt16(connection, REQUEST_CMD_FD_CLOSE);
             sendInt64(connection, 1);
             sendByte(connection, fd);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+        }
+    }
+
+    public int readFD(byte fd, byte[] buffer, int offset, int size) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_FD_READ);
+            sendInt64(connection, 1 + Integer.BYTES);
+            sendByte(connection, fd);
+            sendInt32(connection, size);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+            System.arraycopy(response.body, 0, buffer, offset, response.size);
+            return response.size;
+        }
+    }
+
+    public void writeFD(byte fd, byte[] buffer, int offset, int size) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_FD_WRITE);
+            sendInt64(connection, 1 + size);
+            sendByte(connection, fd);
+            sendExact(connection, buffer, offset, size);
             connection.flush();
             ServerResponse response = waitResponse(lastId);
             if (response.status != REQUEST_OK) {
