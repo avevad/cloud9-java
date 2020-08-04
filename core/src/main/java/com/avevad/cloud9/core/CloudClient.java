@@ -265,6 +265,26 @@ public final class CloudClient {
         }
     }
 
+    public NodeInfo getNodeInfo(Node node) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_GET_NODE_INFO);
+            sendInt64(connection, NODE_ID_SIZE);
+            node.sendNode(connection);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+            int pos = 0;
+            byte type = response.body[pos++];
+            long size = bufRecvInt64(response.body, pos);
+            pos += Long.BYTES;
+            byte rights = response.body[pos];
+            return new NodeInfo(type, size, rights);
+        }
+    }
+
     public interface PasswordCallback {
         String promptPassword();
     }
@@ -294,6 +314,27 @@ public final class CloudClient {
         public RequestException(short status) {
             super("request status code " + status);
             this.status = status;
+        }
+    }
+
+    public static class NodeInfo {
+        public final byte type;
+        public final long size;
+        public final byte rights;
+
+        public NodeInfo(byte type, long size, byte rights) {
+            this.type = type;
+            this.size = size;
+            this.rights = rights;
+        }
+
+        @Override
+        public String toString() {
+            return "NodeInfo{" +
+                    "type=" + type +
+                    ", size=" + size +
+                    ", rights=" + rights +
+                    '}';
         }
     }
 }
