@@ -140,4 +140,14 @@ public final class CloudCommon {
             return builder.toString();
         }
     }
+
+    enum NodeType {
+        FILE(0), DIRECTORY(1);
+
+        public final byte id;
+
+        NodeType(int id) {
+            this.id = (byte) id;
+        }
+    }
 }

@@ -139,12 +139,12 @@ public final class CloudClient {
             sendInt64(connection, NODE_ID_SIZE);
             node.sendNode(connection);
             response = waitResponse(lastId);
-            if(response.status != REQUEST_OK) {
+            if (response.status != REQUEST_OK) {
                 throw new RequestException(response.status);
             }
         }
         int pos = 0;
-        while(pos < response.size) {
+        while (pos < response.size) {
             Node child = Node.bufRecvNode(response.body, pos);
             pos += NODE_ID_SIZE;
             int nameSize = 0xFF & response.body[pos];
@@ -152,6 +152,53 @@ public final class CloudClient {
             String name = bufRecvString(response.body, pos, nameSize);
             pos += nameSize;
             callback.call(child, name);
+        }
+    }
+
+    public Node getNodeParent(Node node) throws IOException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_GET_PARENT);
+            sendInt64(connection, NODE_ID_SIZE);
+            node.sendNode(connection);
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+            return response.size == 0 ? null : Node.bufRecvNode(response.body, 0);
+        }
+    }
+
+    public void makeNode(Node parent, String name, NodeType type) throws IOException {
+        synchronized (apiLock) {
+            int nameSize = stringSize(name);
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_MAKE_NODE);
+            sendInt64(connection, NODE_ID_SIZE + 1 + nameSize + 1);
+            parent.sendNode(connection);
+            sendByte(connection, (byte) nameSize);
+            sendString(connection, name);
+            sendByte(connection, type.id);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if(response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+        }
+    }
+
+    public String getNodeOwner(Node node) throws IOException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_GET_NODE_OWNER);
+            sendInt64(connection, NODE_ID_SIZE);
+            node.sendNode(connection);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if(response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+            return bufRecvString(response.body, 0, response.size);
         }
     }
 
