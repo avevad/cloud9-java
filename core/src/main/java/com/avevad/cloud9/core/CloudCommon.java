@@ -116,7 +116,7 @@ public final class CloudCommon {
         }
 
         public static Node fromString(String id) {
-            if (id.length() != NODE_ID_SIZE) throw new IllegalArgumentException("invalid node id size");
+            if (id.length() != NODE_ID_SIZE * 2) throw new IllegalArgumentException("invalid node id size");
             if (!IntStream.range(0, NODE_ID_SIZE).mapToObj(id::charAt).
                     allMatch(c -> (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')))
                 throw new IllegalArgumentException("invalid character in id");
