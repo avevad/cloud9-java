@@ -313,6 +313,33 @@ public final class CloudClient {
         }
     }
 
+    public void setNodeGroup(Node node, String group) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_SET_NODE_GROUP);
+            sendInt64(connection, NODE_ID_SIZE + stringSize(group));
+            node.sendNode(connection);
+            sendString(connection, group);
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+        }
+    }
+
+    public void groupInvite(String user) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_GROUP_INVITE);
+            sendInt64(connection, stringSize(user));
+            sendString(connection, user);
+            ServerResponse response = waitResponse(lastId);
+            if(response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+        }
+    }
+
     public interface PasswordCallback {
         String promptPassword();
     }
