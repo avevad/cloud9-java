@@ -285,6 +285,34 @@ public final class CloudClient {
         }
     }
 
+    public void setNodeRights(Node node, byte rights) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_SET_NODE_RIGHTS);
+            sendInt64(connection, NODE_ID_SIZE + 1);
+            node.sendNode(connection);
+            sendByte(connection, rights);
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+        }
+    }
+
+    public String getNodeGroup(Node node) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_GET_NODE_GROUP);
+            sendInt64(connection, NODE_ID_SIZE);
+            node.sendNode(connection);
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+            return bufRecvString(response.body, 0, response.size);
+        }
+    }
+
     public interface PasswordCallback {
         String promptPassword();
     }

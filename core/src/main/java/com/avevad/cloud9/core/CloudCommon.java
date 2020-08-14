@@ -88,6 +88,11 @@ public final class CloudCommon {
     public static final byte FD_MODE_READ = 0b10;
     public static final byte FD_MODE_WRITE = 0b01;
 
+    public static final byte NODE_RIGHTS_GROUP_READ = 0b1000;
+    public static final byte NODE_RIGHTS_GROUP_WRITE = 0b0100;
+    public static final byte NODE_RIGHTS_ALL_READ = 0b0010;
+    public static final byte NODE_RIGHTS_ALL_WRITE = 0b0001;
+
     public static final class Node {
         private final byte[] id;
 
