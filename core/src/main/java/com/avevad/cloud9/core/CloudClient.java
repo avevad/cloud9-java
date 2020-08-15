@@ -332,12 +332,51 @@ public final class CloudClient {
         }
     }
 
+    public void groupList(GroupMemberCallback callback) throws IOException, RequestException {
+        ServerResponse response;
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_GROUP_LIST);
+            sendInt64(connection, 0);
+            connection.flush();
+            response = waitResponse(lastId);
+        }
+        int pos = 0;
+        while (pos < response.size) {
+            int nameSize = 0xFF & response.body[pos];
+            pos++;
+            String name = bufRecvString(response.body, pos, nameSize);
+            pos += nameSize;
+            callback.call(name);
+        }
+    }
+
+    public Node copyNode(Node node, String name) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_COPY_NODE);
+            sendInt64(connection, NODE_ID_SIZE + stringSize(name));
+            node.sendNode(connection);
+            sendString(connection, name);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if(response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+            return Node.bufRecvNode(response.body, 0);
+        }
+    }
+
     public interface PasswordCallback {
         String promptPassword();
     }
 
     public interface DirectoryEntryCallback {
         void call(Node node, String name) throws IOException, RequestException;
+    }
+
+    public interface GroupMemberCallback {
+        void call(String user) throws IOException, RequestException;
     }
 
     public static final class ProtocolException extends RuntimeException {
