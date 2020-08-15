@@ -360,12 +360,43 @@ public final class CloudClient {
             sendString(connection, name);
             connection.flush();
             ServerResponse response = waitResponse(lastId);
-            if(response.status != REQUEST_OK) {
+            if (response.status != REQUEST_OK) {
                 throw new RequestException(response.status);
             }
             return Node.bufRecvNode(response.body, 0);
         }
     }
+
+    public void moveNode(Node node, Node destination) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_MOVE_NODE);
+            sendInt64(connection, NODE_ID_SIZE * 2);
+            node.sendNode(connection);
+            destination.sendNode(connection);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+        }
+    }
+
+    public void renameNode(Node node, String name) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_RENAME_NODE);
+            sendInt64(connection, NODE_ID_SIZE + stringSize(name));
+            node.sendNode(connection);
+            sendString(connection, name);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) {
+                throw new RequestException(response.status);
+            }
+        }
+    }
+
 
     public interface PasswordCallback {
         String promptPassword();
