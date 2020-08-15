@@ -318,6 +318,20 @@ public final class CloudClient {
         }
     }
 
+    public void removeNode(Node node) throws IOException, RequestException {
+        ServerResponse response = singleNodeRequest(REQUEST_CMD_REMOVE_NODE, node);
+        if (response.status != REQUEST_OK) {
+            throw new RequestException(response.status);
+        }
+    }
+
+    public void groupKick(String user) throws IOException, RequestException {
+        ServerResponse response = singleStringRequest(REQUEST_CMD_GROUP_KICK, user);
+        if (response.status != REQUEST_OK) {
+            throw new RequestException(response.status);
+        }
+    }
+
     public interface PasswordCallback {
         String promptPassword();
     }
