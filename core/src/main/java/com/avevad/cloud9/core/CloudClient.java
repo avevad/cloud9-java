@@ -112,19 +112,34 @@ public final class CloudClient {
         }
     }
 
-    public Node getHome(String user) throws IOException, RequestException {
+    private ServerResponse singleNodeRequest(short cmd, Node node) throws IOException, RequestException {
         synchronized (apiLock) {
             sendInt32(connection, ++lastId);
-            sendInt16(connection, REQUEST_CMD_GET_HOME);
-            sendInt64(connection, stringSize(user));
-            sendString(connection, user);
+            sendInt16(connection, cmd);
+            sendInt64(connection, NODE_ID_SIZE);
+            node.sendNode(connection);
             connection.flush();
-            ServerResponse response = waitResponse(lastId);
-            if (response.status != REQUEST_OK) {
-                throw new RequestException(response.status);
-            }
-            return Node.bufRecvNode(response.body, 0);
+            return waitResponse(lastId);
         }
+    }
+
+    private ServerResponse singleStringRequest(short cmd, String string) throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, cmd);
+            sendInt64(connection, stringSize(string));
+            sendString(connection, string);
+            connection.flush();
+            return waitResponse(lastId);
+        }
+    }
+
+    public Node getHome(String user) throws IOException, RequestException {
+        ServerResponse response = singleStringRequest(REQUEST_CMD_GET_HOME, user);
+        if (response.status != REQUEST_OK) {
+            throw new RequestException(response.status);
+        }
+        return Node.bufRecvNode(response.body, 0);
     }
 
     public Node getHome() throws IOException, RequestException {
@@ -132,16 +147,9 @@ public final class CloudClient {
     }
 
     public void listDirectory(Node node, DirectoryEntryCallback callback) throws IOException, RequestException {
-        ServerResponse response;
-        synchronized (apiLock) {
-            sendInt32(connection, ++lastId);
-            sendInt16(connection, REQUEST_CMD_LIST_DIRECTORY);
-            sendInt64(connection, NODE_ID_SIZE);
-            node.sendNode(connection);
-            response = waitResponse(lastId);
-            if (response.status != REQUEST_OK) {
-                throw new RequestException(response.status);
-            }
+        ServerResponse response = singleNodeRequest(REQUEST_CMD_LIST_DIRECTORY, node);
+        if (response.status != REQUEST_OK) {
+            throw new RequestException(response.status);
         }
         int pos = 0;
         while (pos < response.size) {
@@ -156,17 +164,11 @@ public final class CloudClient {
     }
 
     public Node getNodeParent(Node node) throws IOException, RequestException {
-        synchronized (apiLock) {
-            sendInt32(connection, ++lastId);
-            sendInt16(connection, REQUEST_CMD_GET_PARENT);
-            sendInt64(connection, NODE_ID_SIZE);
-            node.sendNode(connection);
-            ServerResponse response = waitResponse(lastId);
-            if (response.status != REQUEST_OK) {
-                throw new RequestException(response.status);
-            }
-            return response.size == 0 ? null : Node.bufRecvNode(response.body, 0);
+        ServerResponse response = singleNodeRequest(REQUEST_CMD_GET_PARENT, node);
+        if (response.status != REQUEST_OK) {
+            throw new RequestException(response.status);
         }
+        return response.size == 0 ? null : Node.bufRecvNode(response.body, 0);
     }
 
     public Node makeNode(Node parent, String name, NodeType type) throws IOException, RequestException {
@@ -189,18 +191,11 @@ public final class CloudClient {
     }
 
     public String getNodeOwner(Node node) throws IOException, RequestException {
-        synchronized (apiLock) {
-            sendInt32(connection, ++lastId);
-            sendInt16(connection, REQUEST_CMD_GET_NODE_OWNER);
-            sendInt64(connection, NODE_ID_SIZE);
-            node.sendNode(connection);
-            connection.flush();
-            ServerResponse response = waitResponse(lastId);
-            if (response.status != REQUEST_OK) {
-                throw new RequestException(response.status);
-            }
-            return bufRecvString(response.body, 0, response.size);
+        ServerResponse response = singleNodeRequest(REQUEST_CMD_GET_NODE_OWNER, node);
+        if (response.status != REQUEST_OK) {
+            throw new RequestException(response.status);
         }
+        return bufRecvString(response.body, 0, response.size);
     }
 
     public byte openFD(Node node, byte mode) throws IOException, RequestException {
@@ -266,23 +261,16 @@ public final class CloudClient {
     }
 
     public NodeInfo getNodeInfo(Node node) throws IOException, RequestException {
-        synchronized (apiLock) {
-            sendInt32(connection, ++lastId);
-            sendInt16(connection, REQUEST_CMD_GET_NODE_INFO);
-            sendInt64(connection, NODE_ID_SIZE);
-            node.sendNode(connection);
-            connection.flush();
-            ServerResponse response = waitResponse(lastId);
-            if (response.status != REQUEST_OK) {
-                throw new RequestException(response.status);
-            }
-            int pos = 0;
-            byte type = response.body[pos++];
-            long size = bufRecvInt64(response.body, pos);
-            pos += Long.BYTES;
-            byte rights = response.body[pos];
-            return new NodeInfo(type, size, rights);
+        ServerResponse response = singleNodeRequest(REQUEST_CMD_GET_NODE_INFO, node);
+        if (response.status != REQUEST_OK) {
+            throw new RequestException(response.status);
         }
+        int pos = 0;
+        byte type = response.body[pos++];
+        long size = bufRecvInt64(response.body, pos);
+        pos += Long.BYTES;
+        byte rights = response.body[pos];
+        return new NodeInfo(type, size, rights);
     }
 
     public void setNodeRights(Node node, byte rights) throws IOException, RequestException {
@@ -292,6 +280,7 @@ public final class CloudClient {
             sendInt64(connection, NODE_ID_SIZE + 1);
             node.sendNode(connection);
             sendByte(connection, rights);
+            connection.flush();
             ServerResponse response = waitResponse(lastId);
             if (response.status != REQUEST_OK) {
                 throw new RequestException(response.status);
@@ -300,17 +289,11 @@ public final class CloudClient {
     }
 
     public String getNodeGroup(Node node) throws IOException, RequestException {
-        synchronized (apiLock) {
-            sendInt32(connection, ++lastId);
-            sendInt16(connection, REQUEST_CMD_GET_NODE_GROUP);
-            sendInt64(connection, NODE_ID_SIZE);
-            node.sendNode(connection);
-            ServerResponse response = waitResponse(lastId);
-            if (response.status != REQUEST_OK) {
-                throw new RequestException(response.status);
-            }
-            return bufRecvString(response.body, 0, response.size);
+        ServerResponse response = singleNodeRequest(REQUEST_CMD_GET_NODE_GROUP, node);
+        if (response.status != REQUEST_OK) {
+            throw new RequestException(response.status);
         }
+        return bufRecvString(response.body, 0, response.size);
     }
 
     public void setNodeGroup(Node node, String group) throws IOException, RequestException {
@@ -320,6 +303,7 @@ public final class CloudClient {
             sendInt64(connection, NODE_ID_SIZE + stringSize(group));
             node.sendNode(connection);
             sendString(connection, group);
+            connection.flush();
             ServerResponse response = waitResponse(lastId);
             if (response.status != REQUEST_OK) {
                 throw new RequestException(response.status);
@@ -328,15 +312,9 @@ public final class CloudClient {
     }
 
     public void groupInvite(String user) throws IOException, RequestException {
-        synchronized (apiLock) {
-            sendInt32(connection, ++lastId);
-            sendInt16(connection, REQUEST_CMD_GROUP_INVITE);
-            sendInt64(connection, stringSize(user));
-            sendString(connection, user);
-            ServerResponse response = waitResponse(lastId);
-            if(response.status != REQUEST_OK) {
-                throw new RequestException(response.status);
-            }
+        ServerResponse response = singleStringRequest(REQUEST_CMD_GROUP_INVITE, user);
+        if (response.status != REQUEST_OK) {
+            throw new RequestException(response.status);
         }
     }
 
