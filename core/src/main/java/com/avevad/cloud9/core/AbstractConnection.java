@@ -9,11 +9,11 @@ public interface AbstractConnection {
 
     int send(byte[] buffer, int offset, int size) throws IOException;
 
-    default long recv(byte[] buffer, int size) throws IOException {
+    default int recv(byte[] buffer, int size) throws IOException {
         return recv(buffer, 0, size);
     }
 
-    default long send(byte[] buffer, int size) throws IOException {
+    default int send(byte[] buffer, int size) throws IOException {
         return send(buffer, 0, size);
     }
 
