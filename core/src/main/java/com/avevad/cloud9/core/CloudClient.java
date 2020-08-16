@@ -27,6 +27,7 @@ public final class CloudClient {
     private boolean connected = true;
     private final Object notifier = new Object();
     private final Object apiLock = new Object();
+    private final Object ldtmLock = new Object();
     private int lastId = 0;
 
     public CloudClient(AbstractConnection connection, String login, PasswordCallback passwordCallback) throws IOException, InitException {
@@ -61,6 +62,10 @@ public final class CloudClient {
                 synchronized (notifier) {
                     responses.put(id, new ServerResponse(status, body));
                     notifier.notifyAll();
+                }
+                if (status == REQUEST_SWITCH_OK) {
+                    synchronized (ldtmLock) {
+                    }
                 }
             }
         } catch (IOException e) {
@@ -397,6 +402,52 @@ public final class CloudClient {
         }
     }
 
+    public void longReadFD(byte fd, long size, byte[] buffer, int offset, int bufferSize, ReadDataCallback callback) throws IOException, RequestException {
+        synchronized (apiLock) {
+            synchronized (ldtmLock) {
+                sendInt32(connection, ++lastId);
+                sendInt16(connection, REQUEST_CMD_FD_READ_LONG);
+                sendInt64(connection, 1 + Long.BYTES);
+                sendByte(connection, fd);
+                sendInt64(connection, size);
+                connection.flush();
+                ServerResponse response = waitResponse(lastId);
+                if (response.status != REQUEST_SWITCH_OK) {
+                    throw new RequestException(response.status);
+                }
+                long done = 0;
+                while (done < size) {
+                    int read = connection.recv(buffer, offset, (int) Long.min(bufferSize, size - done));
+                    callback.call(read);
+                    done += read;
+                }
+            }
+        }
+    }
+
+    public void longWriteFD(byte fd, long size, byte[] buffer, int offset, int bufferSize, WriteDataCallback callback) throws IOException, RequestException {
+        synchronized (apiLock) {
+            synchronized (ldtmLock) {
+                sendInt32(connection, ++lastId);
+                sendInt16(connection, REQUEST_CMD_FD_WRITE_LONG);
+                sendInt64(connection, 1 + Long.BYTES);
+                sendByte(connection, fd);
+                sendInt64(connection, size);
+                connection.flush();
+                ServerResponse response = waitResponse(lastId);
+                if (response.status != REQUEST_SWITCH_OK) {
+                    throw new RequestException(response.status);
+                }
+                long done = 0;
+                while(done < size) {
+                    int sent = callback.call();
+                    sendExact(connection, buffer, offset, sent);
+                    done += sent;
+                }
+            }
+        }
+    }
+
 
     public interface PasswordCallback {
         String promptPassword();
@@ -408,6 +459,14 @@ public final class CloudClient {
 
     public interface GroupMemberCallback {
         void call(String user) throws IOException, RequestException;
+    }
+
+    public interface ReadDataCallback {
+        void call(int size);
+    }
+
+    public interface WriteDataCallback {
+        int call();
     }
 
     public static final class ProtocolException extends RuntimeException {
