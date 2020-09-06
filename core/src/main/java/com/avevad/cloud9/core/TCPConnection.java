@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public final class TCPConnection implements AbstractConnection {
+public final class TCPConnection implements CloudConnection {
     private final Socket socket;
     private final InputStream in;
     private final OutputStream out;

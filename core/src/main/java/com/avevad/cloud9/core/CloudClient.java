@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 import static com.avevad.cloud9.core.CloudCommon.*;
-import static com.avevad.cloud9.core.AbstractConnection.Helper.*;
+import static com.avevad.cloud9.core.CloudConnection.Helper.*;
 
 public final class CloudClient {
     private static final class ServerResponse {
@@ -21,7 +21,7 @@ public final class CloudClient {
         }
     }
 
-    private final AbstractConnection connection;
+    private final CloudConnection connection;
     private final Thread listener;
     private final Map<Integer, ServerResponse> responses = new HashMap<>();
     private boolean connected = true;
@@ -30,7 +30,7 @@ public final class CloudClient {
     private final Object ldtmLock = new Object();
     private int lastId = 0;
 
-    public CloudClient(AbstractConnection connection, String login, PasswordCallback passwordCallback) throws IOException, InitException {
+    public CloudClient(CloudConnection connection, String login, PasswordCallback passwordCallback) throws IOException, InitException {
         listener = new Thread(this::listenerRoutine);
         this.connection = connection;
         negotiate();

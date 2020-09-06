@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-import static com.avevad.cloud9.core.AbstractConnection.Helper.recvExact;
-import static com.avevad.cloud9.core.AbstractConnection.Helper.sendExact;
+import static com.avevad.cloud9.core.CloudConnection.Helper.recvExact;
+import static com.avevad.cloud9.core.CloudConnection.Helper.sendExact;
 
 public final class CloudCommon {
     private CloudCommon() {
@@ -104,7 +104,7 @@ public final class CloudCommon {
             return new Node(Arrays.copyOfRange(buffer, offset, offset + NODE_ID_SIZE));
         }
 
-        public static Node recvNode(AbstractConnection connection) throws IOException {
+        public static Node recvNode(CloudConnection connection) throws IOException {
             byte[] buffer = new byte[NODE_ID_SIZE];
             recvExact(connection, buffer, 0, NODE_ID_SIZE);
             return bufRecvNode(buffer, 0);
@@ -114,7 +114,7 @@ public final class CloudCommon {
             System.arraycopy(id, 0, buffer, offset, NODE_ID_SIZE);
         }
 
-        public void sendNode(AbstractConnection connection) throws IOException {
+        public void sendNode(CloudConnection connection) throws IOException {
             byte[] buffer = new byte[NODE_ID_SIZE];
             bufSendNode(buffer, 0);
             sendExact(connection, buffer, 0, NODE_ID_SIZE);
