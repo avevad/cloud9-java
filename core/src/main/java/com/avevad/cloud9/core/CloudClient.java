@@ -30,7 +30,7 @@ public final class CloudClient {
     private final Object ldtmLock = new Object();
     private int lastId = 0;
 
-    public CloudClient(CloudConnection connection, String login, PasswordCallback passwordCallback) throws IOException, InitException {
+    public CloudClient(CloudConnection connection, String login, PasswordCallback passwordCallback) throws IOException, InitException, ProtocolException {
         listener = new Thread(this::listenerRoutine);
         this.connection = connection;
         negotiate();
@@ -76,7 +76,7 @@ public final class CloudClient {
         }
     }
 
-    private void negotiate() throws IOException {
+    private void negotiate() throws IOException, ProtocolException {
         byte[] clientHeader = new byte[CLOUD_FULL_HEADER_LENGTH];
         System.arraycopy(CLOUD_HEADER, 0, clientHeader, 0, CLOUD_HEADER_LENGTH);
         bufSendInt16(clientHeader, CLOUD_HEADER_LENGTH, CLOUD_RELEASE_CODE);
@@ -469,7 +469,7 @@ public final class CloudClient {
         int call();
     }
 
-    public static final class ProtocolException extends RuntimeException {
+    public static final class ProtocolException extends Exception {
         public ProtocolException(String message) {
             super(message);
         }

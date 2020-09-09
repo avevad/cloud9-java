@@ -27,6 +27,8 @@ public final class CloudCommon {
     public static final int CLOUD_HEADER_LENGTH = 6;
     public static final int CLOUD_FULL_HEADER_LENGTH = CLOUD_HEADER_LENGTH + Short.BYTES;
 
+    public static final int CLOUD_DEFAULT_PORT = 909;
+
     public static final int NODE_ID_SIZE = 16;
 
     public static final short INIT_CMD_AUTH = 1;
