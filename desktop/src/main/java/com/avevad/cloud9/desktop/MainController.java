@@ -15,7 +15,7 @@ public final class MainController {
     }
 
     public void newWindow() {
-        WindowController windowController = new WindowController(this);
+        WindowController windowController = new WindowController(this, windows.isEmpty());
         windows.add(windowController);
         SwingUtilities.invokeLater(() -> windowController.setVisible(true));
     }

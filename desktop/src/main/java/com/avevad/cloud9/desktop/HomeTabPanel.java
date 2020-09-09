@@ -1,9 +1,6 @@
 package com.avevad.cloud9.desktop;
 
-import com.avevad.cloud9.core.CloudClient;
-import com.avevad.cloud9.core.CloudCommon;
-import com.avevad.cloud9.core.CloudConnection;
-import com.avevad.cloud9.core.TCPConnection;
+import com.avevad.cloud9.core.*;
 import com.avevad.cloud9.core.util.Holder;
 
 import javax.swing.*;
@@ -101,9 +98,29 @@ public final class HomeTabPanel {
         c.fill = GridBagConstraints.BOTH;
         panel.add(quickPasswordField, c);
 
-        JButton quickButton = new JButton(string(STRING_CONNECT));
+        JLabel quickSecureLabel = new JLabel(string(STRING_SECURE_CONNECTION));
+        quickSecureLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        quickSecureLabel.setVerticalAlignment(SwingConstants.CENTER);
         c.gridx = 0;
         c.gridy = 4;
+        c.gridwidth = 2;
+        c.gridheight = 1;
+        c.fill = GridBagConstraints.BOTH;
+        panel.add(quickSecureLabel, c);
+
+        JCheckBox quickSecureCheck = new JCheckBox();
+        if(getConfig().lastQuickSecure != null) quickSecureCheck.setSelected(getConfig().lastQuickSecure);
+        else quickSecureCheck.setSelected(true);
+        c.gridx = 2;
+        c.gridy = 4;
+        c.gridwidth = 2;
+        c.gridheight = 1;
+        c.fill = GridBagConstraints.BOTH;
+        panel.add(quickSecureCheck, c);
+
+        JButton quickButton = new JButton(string(STRING_CONNECT));
+        c.gridx = 0;
+        c.gridy = 5;
         c.gridwidth = 4;
         c.gridheight = 1;
         c.fill = GridBagConstraints.NONE;
@@ -144,10 +161,13 @@ public final class HomeTabPanel {
                     getConfig().lastQuickHost = quickHostField.getText();
                     getConfig().lastQuickPort = Integer.parseInt(quickPortField.getText());
                     getConfig().lastQuickLogin = quickLoginField.getText();
+                    getConfig().lastQuickSecure = quickSecureCheck.isSelected();
                     saveConfig();
                     Holder<String> error = new Holder<>();
                     try {
-                        CloudConnection connection = new TCPConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
+                        CloudConnection connection;
+                        if(quickSecureCheck.isSelected()) connection = new SSLConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
+                        else connection = new TCPConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
                         CloudClient client = new CloudClient(connection, quickLoginField.getText(), () -> new String(quickPasswordField.getPassword()));
                     } catch (UnknownHostException ex) {
                         error.value = string(STRING_UNKNOWN_HOST, ex.getMessage());

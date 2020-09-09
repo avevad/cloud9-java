@@ -14,7 +14,7 @@ public final class WindowController {
     private final HomeTabPanel home = new HomeTabPanel(this);
 
 
-    public WindowController(MainController mainController) {
+    public WindowController(MainController mainController, boolean first) {
         this.mainController = mainController;
 
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -40,7 +40,9 @@ public final class WindowController {
         frame.add(tabbedPane, BorderLayout.CENTER);
 
         frame.setLocationByPlatform(true);
-        frame.pack();
+
+        if(first) frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+        else frame.pack();
     }
 
     public void dispose() {

@@ -73,4 +73,5 @@ public final class DesktopCommon {
     public static final String STRING_ERROR = "error";
     public static final String STRING_UNKNOWN_HOST = "unknown_host";
     public static final String STRING_NEGOTIATION_ERROR = "negotiation_error";
+    public static final String STRING_SECURE_CONNECTION = "secure_connection";
 }
