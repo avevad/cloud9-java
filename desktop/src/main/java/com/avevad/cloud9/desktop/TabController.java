@@ -13,4 +13,8 @@ public final class TabController {
         this.windowController = windowController;
         controlClient = cloud;
     }
+
+    public void destroy() {
+        controlClient.close();
+    }
 }

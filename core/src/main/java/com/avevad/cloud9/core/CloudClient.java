@@ -448,6 +448,10 @@ public final class CloudClient {
         }
     }
 
+    public void close() {
+        connection.close();
+    }
+
 
     public interface PasswordCallback {
         String promptPassword();

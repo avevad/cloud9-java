@@ -164,11 +164,12 @@ public final class HomeTabPanel {
                     getConfig().lastQuickSecure = quickSecureCheck.isSelected();
                     saveConfig();
                     Holder<String> error = new Holder<>();
+                    Holder<CloudClient> cloud = new Holder<>();
                     try {
                         CloudConnection connection;
                         if(quickSecureCheck.isSelected()) connection = new SSLConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
                         else connection = new TCPConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
-                        CloudClient client = new CloudClient(connection, quickLoginField.getText(), () -> new String(quickPasswordField.getPassword()));
+                        cloud.value = new CloudClient(connection, quickLoginField.getText(), () -> new String(quickPasswordField.getPassword()));
                     } catch (UnknownHostException ex) {
                         error.value = string(STRING_UNKNOWN_HOST, ex.getMessage());
                     } catch (IOException ex) {
@@ -185,6 +186,9 @@ public final class HomeTabPanel {
                                     string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
                         quickButton.setEnabled(true);
                         quickButton.setText(string(STRING_CONNECT));
+                        if(cloud.value != null) windowController.newTab(
+                                new TabController(windowController, cloud.value),
+                                quickLoginField.getText() + "@" + quickHostField.getText(), true);
                     });
                 });
             }
