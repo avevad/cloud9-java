@@ -1,5 +1,8 @@
 package com.avevad.cloud9.desktop;
 
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+
 import javax.swing.*;
 
 import static com.avevad.cloud9.desktop.DesktopCommon.*;
@@ -15,14 +18,11 @@ public class Main {
             });
         });
         loadConfig();
+        FlatLightLaf.install();
+        FlatDarculaLaf.install();
         try {
-            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (Exception ignored) {
+            UIManager.setLookAndFeel(new FlatDarculaLaf());
+        } catch (UnsupportedLookAndFeelException ignored) {
         }
         MainController controller = new MainController();
         controller.newWindow();

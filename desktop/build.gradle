@@ -1,5 +1,10 @@
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     compile project(":core")
+    implementation "com.formdev:flatlaf:0.41"
 }
 
 
