@@ -83,6 +83,7 @@ public final class DesktopCommon {
     public static final String STRING_FILE_TYPE = "file_type";
     public static final String STRING_FILE_NAME = "file_name";
     public static final String STRING_LOADING = "loading";
+    public static final String STRING_CONNECTION_LOST = "connection_lost";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";
@@ -136,6 +137,7 @@ public final class DesktopCommon {
 
     public static final String ICON_FOLDER = "folder.png";
     public static final String ICON_FILE = "file.png";
+    public static final String ICON_ERROR = "error.png";
 
     public static ImageIcon icon(String name) {
         return new ImageIcon(DesktopCommon.class.getResource(ICONS_PATH + name));

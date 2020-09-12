@@ -27,8 +27,11 @@ public final class TabController {
     private final CardLayout cardLayout = new CardLayout();
     private static final String CARD_TABLE = "card_table";
     private static final String CARD_LOADING = "card_loading";
+    private static final String CARD_ERROR = "card_error";
     private final JTable table = new JTable();
     private final CloudTableModel tableModel = new CloudTableModel();
+    private final JLabel errorLabel = new JLabel(icon(ICON_ERROR));
+
 
     private final List<DirectoryEntry> content = new ArrayList<>();
 
@@ -42,6 +45,13 @@ public final class TabController {
         loadingLabel.setHorizontalAlignment(SwingConstants.CENTER);
         panel.add(loadingLabel, CARD_LOADING);
 
+        errorLabel.setVerticalAlignment(SwingConstants.CENTER);
+        errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        errorLabel.setVerticalTextPosition(SwingConstants.BOTTOM);
+        errorLabel.setHorizontalTextPosition(SwingConstants.CENTER);
+        errorLabel.setFont(errorLabel.getFont().deriveFont(18f));
+        panel.add(errorLabel, CARD_ERROR);
+
         JScrollPane scrollPane = new JScrollPane();
         scrollPane.setViewportView(table);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -54,6 +64,7 @@ public final class TabController {
         table.getColumn(string(STRING_FILE_TYPE)).setMinWidth(tableModel.fileIcon.getIconWidth());
         Runnable rowSelectTask = () -> {
             int row = table.getSelectedRow();
+            if (row == -1) return;
             if (content.get(row).type == NODE_TYPE_DIRECTORY) navigate(content.get(row).node);
         };
         table.addMouseListener(new MouseAdapter() {
@@ -74,9 +85,11 @@ public final class TabController {
         networkQueue.submit(() -> {
             try {
                 navigate(cloud.getHome());
-            } catch (IOException | CloudClient.RequestException e) {
-                // TODO: replace with appropriate handler
-                throw new RuntimeException(e);
+            } catch (IOException e) {
+                errorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
+                cardLayout.show(panel, CARD_ERROR);
+            } catch (CloudClient.RequestException e) { // should never happen in normal conditions
+                throw new RuntimeException();
             }
         });
     }
@@ -148,7 +161,10 @@ public final class TabController {
                     tableModel.fireTableDataChanged();
                     cardLayout.show(panel, CARD_TABLE);
                 });
-            } catch (IOException | CloudClient.RequestException e) {
+            } catch (IOException e) {
+                errorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
+                cardLayout.show(panel, CARD_ERROR);
+            } catch (CloudClient.RequestException e) {
                 // TODO: replace with appropriate handler
                 throw new RuntimeException(e);
             }

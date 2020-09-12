@@ -19,7 +19,9 @@ public final class TCPConnection implements CloudConnection {
 
     @Override
     public int recv(byte[] buffer, int offset, int size) throws IOException {
-        return in.read(buffer, offset, size);
+        int read = in.read(buffer, offset, size);
+        if (read == -1) throw new IOException("end of stream");
+        return read;
     }
 
     @Override
