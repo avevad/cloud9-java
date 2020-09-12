@@ -82,6 +82,7 @@ public final class DesktopCommon {
     public static final String STRING_AUTH_FAILED = "auth_failed";
     public static final String STRING_FILE_TYPE = "file_type";
     public static final String STRING_FILE_NAME = "file_name";
+    public static final String STRING_LOADING = "loading";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";

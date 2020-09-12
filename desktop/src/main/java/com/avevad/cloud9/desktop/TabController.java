@@ -26,6 +26,7 @@ public final class TabController {
     private final TaskQueue networkQueue = new TaskQueue("Network");
     private final CardLayout cardLayout = new CardLayout();
     private static final String CARD_TABLE = "card_table";
+    private static final String CARD_LOADING = "card_loading";
     private final JTable table = new JTable();
     private final CloudTableModel tableModel = new CloudTableModel();
 
@@ -35,6 +36,12 @@ public final class TabController {
         this.windowController = windowController;
         controlClient = cloud;
         panel.setLayout(cardLayout);
+
+        JLabel loadingLabel = new JLabel(string(STRING_LOADING));
+        loadingLabel.setVerticalAlignment(SwingConstants.CENTER);
+        loadingLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(loadingLabel, CARD_LOADING);
+
         JScrollPane scrollPane = new JScrollPane();
         scrollPane.setViewportView(table);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -128,6 +135,7 @@ public final class TabController {
         networkQueue.submit(() -> {
             content.clear();
             try {
+                SwingUtilities.invokeLater(() -> cardLayout.show(panel, CARD_LOADING));
                 controlClient.listDirectory(node, (child, name) -> {
                     DirectoryEntry entry = new DirectoryEntry();
                     entry.node = child;
@@ -138,6 +146,7 @@ public final class TabController {
                 });
                 SwingUtilities.invokeLater(() -> {
                     tableModel.fireTableDataChanged();
+                    cardLayout.show(panel, CARD_TABLE);
                 });
             } catch (IOException | CloudClient.RequestException e) {
                 // TODO: replace with appropriate handler
