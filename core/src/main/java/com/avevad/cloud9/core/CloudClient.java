@@ -439,7 +439,7 @@ public final class CloudClient {
                     throw new RequestException(response.status);
                 }
                 long done = 0;
-                while(done < size) {
+                while (done < size) {
                     int sent = callback.call();
                     sendExact(connection, buffer, offset, sent);
                     done += sent;
@@ -447,11 +447,6 @@ public final class CloudClient {
             }
         }
     }
-
-    public void close() {
-        connection.close();
-    }
-
 
     public interface PasswordCallback {
         String promptPassword();

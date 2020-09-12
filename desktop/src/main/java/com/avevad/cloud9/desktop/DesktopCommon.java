@@ -1,5 +1,6 @@
 package com.avevad.cloud9.desktop;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +20,7 @@ public final class DesktopCommon {
 
     public static final String CONFIG_FILE = "config.bin";
 
-    public static final String STRINGS_BUNDLE = "strings";
+    public static final String STRINGS_BUNDLE = "assets/bundles/strings";
     private static final ResourceBundle stringsBundle = ResourceBundle.getBundle(STRINGS_BUNDLE);
     private static Config config = null;
 
@@ -79,9 +80,12 @@ public final class DesktopCommon {
     public static final String STRING_NEGOTIATION_ERROR = "negotiation_error";
     public static final String STRING_SECURE_CONNECTION = "secure_connection";
     public static final String STRING_AUTH_FAILED = "auth_failed";
+    public static final String STRING_FILE_TYPE = "file_type";
+    public static final String STRING_FILE_NAME = "file_name";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";
+
     static {
         INIT_STATUS_STRINGS.put(INIT_OK, "init_ok");
         INIT_STATUS_STRINGS.put(INIT_ERR_BODY_TOO_LARGE, "init_error_body_too_large");
@@ -99,6 +103,7 @@ public final class DesktopCommon {
 
     private static final Map<Short, String> REQUEST_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_REQUEST_ERROR_UNKNOWN = "request_error_unknown";
+
     static {
         REQUEST_STATUS_STRINGS.put(REQUEST_OK, "request_ok");
         REQUEST_STATUS_STRINGS.put(REQUEST_SWITCH_OK, "request_switch_ok");
@@ -123,5 +128,15 @@ public final class DesktopCommon {
 
     public static String request_status_string(short status) {
         return REQUEST_STATUS_STRINGS.getOrDefault(status, STRING_REQUEST_ERROR_UNKNOWN);
+    }
+
+
+    public static final String ICONS_PATH = "/assets/icons/";
+
+    public static final String ICON_FOLDER = "folder.png";
+    public static final String ICON_FILE = "file.png";
+
+    public static ImageIcon icon(String name) {
+        return new ImageIcon(DesktopCommon.class.getResource(ICONS_PATH + name));
     }
 }

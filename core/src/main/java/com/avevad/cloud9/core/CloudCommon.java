@@ -95,6 +95,9 @@ public final class CloudCommon {
     public static final byte NODE_RIGHTS_ALL_READ = 0b0010;
     public static final byte NODE_RIGHTS_ALL_WRITE = 0b0001;
 
+    public static final byte NODE_TYPE_FILE = 0x0;
+    public static final byte NODE_TYPE_DIRECTORY = 0x1;
+
     public static final class Node {
         private final byte[] id;
 
