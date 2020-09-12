@@ -6,6 +6,10 @@ import com.avevad.cloud9.core.util.TaskQueue;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +19,7 @@ import static com.avevad.cloud9.core.CloudCommon.Node;
 import static com.avevad.cloud9.desktop.DesktopCommon.*;
 
 public final class TabController {
+    private static final String NAVIGATE = "navigate";
     public final WindowController windowController;
     private final CloudClient controlClient;
     public final JPanel panel = new JPanel();
@@ -35,10 +40,30 @@ public final class TabController {
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         panel.add(scrollPane, CARD_TABLE);
+
         table.setFillsViewportHeight(true);
         table.setModel(tableModel);
         table.getColumn(string(STRING_FILE_TYPE)).setMaxWidth(tableModel.fileIcon.getIconWidth());
         table.getColumn(string(STRING_FILE_TYPE)).setMinWidth(tableModel.fileIcon.getIconWidth());
+        Runnable rowSelectTask = () -> {
+            int row = table.getSelectedRow();
+            if (content.get(row).type == NODE_TYPE_DIRECTORY) navigate(content.get(row).node);
+        };
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) rowSelectTask.run();
+            }
+        });
+        KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+        table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enter, NAVIGATE);
+        table.getActionMap().put(NAVIGATE, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                rowSelectTask.run();
+            }
+        });
+
         networkQueue.submit(() -> {
             try {
                 navigate(cloud.getHome());
