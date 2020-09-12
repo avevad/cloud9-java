@@ -57,11 +57,13 @@ public final class WindowController {
 
         frame.setLocationByPlatform(true);
 
+        frame.pack();
+        frame.setMinimumSize(new Dimension(frame.getWidth() + 5, frame.getHeight() + 5));
         if (first) frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-        else frame.pack();
     }
 
     public void dispose() {
+        closeAllTabs();
         frame.setVisible(false);
         frame.dispose();
     }
@@ -86,6 +88,10 @@ public final class WindowController {
         tabController.destroy();
         tabbedPane.removeTabAt(pos);
         tabs.remove(pos);
+    }
+
+    private void closeAllTabs() {
+        for (int i = tabs.size() - 1; i >= 0; i--) closeTab(tabs.get(i));
     }
 
 
