@@ -14,8 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.avevad.cloud9.core.CloudCommon.NODE_TYPE_DIRECTORY;
-import static com.avevad.cloud9.core.CloudCommon.Node;
+import static com.avevad.cloud9.core.CloudCommon.*;
 import static com.avevad.cloud9.desktop.DesktopCommon.*;
 
 public final class TabController {
@@ -31,7 +30,10 @@ public final class TabController {
     private final JTable table = new JTable();
     private final CloudTableModel tableModel = new CloudTableModel();
     private final JLabel errorLabel = new JLabel(icon(ICON_ERROR));
-
+    private String path = String.valueOf(CLOUD_PATH_HOME);
+    private Node node;
+    private final JTextField pathField = new JTextField();
+    private final JButton parentButton = new JButton();
 
     private final List<DirectoryEntry> content = new ArrayList<>();
 
@@ -56,7 +58,43 @@ public final class TabController {
         scrollPane.setViewportView(table);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        panel.add(scrollPane, CARD_TABLE);
+        JPanel tablePanel = new JPanel();
+        tablePanel.setLayout(new BorderLayout());
+        tablePanel.add(scrollPane, BorderLayout.CENTER);
+        JPanel navPanel = new JPanel();
+        navPanel.setLayout(new GridBagLayout());
+        tablePanel.add(navPanel, BorderLayout.NORTH);
+        panel.add(tablePanel, CARD_TABLE);
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = c.gridy = 0;
+        c.gridwidth = c.gridheight = 1;
+        c.weightx = 1;
+        c.fill = GridBagConstraints.BOTH;
+        navPanel.add(pathField, c);
+
+        parentButton.addActionListener(e -> {
+            networkQueue.submit(() -> {
+                try {
+                    Node parent = controlClient.getNodeParent(node);
+                    String newPath = path.substring(0, path.lastIndexOf(CLOUD_PATH_SEP));
+                    navigate(parent, newPath);
+                } catch (IOException ex) {
+                    SwingUtilities.invokeLater(() -> {
+                        errorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
+                        cardLayout.show(panel, CARD_ERROR);
+                    });
+                } catch (CloudClient.RequestException ex) {
+                    // TODO: add appropriate handler
+                    throw new RuntimeException(ex);
+                }
+            });
+        });
+        parentButton.setToolTipText(string(STRING_GO_UP));
+        c.gridx = 1;
+        c.weightx = 0;
+        navPanel.add(parentButton, c);
+        parentButton.setIcon(resizeHeight(icon(ICON_OUTWARDS), pathField.getFontMetrics(pathField.getFont()).getHeight()));
 
         table.setFillsViewportHeight(true);
         table.setModel(tableModel);
@@ -65,7 +103,8 @@ public final class TabController {
         Runnable rowSelectTask = () -> {
             int row = table.getSelectionModel().getAnchorSelectionIndex();
             if (row == -1) return;
-            if (content.get(row).type == NODE_TYPE_DIRECTORY) navigate(content.get(row).node);
+            if (content.get(row).type == NODE_TYPE_DIRECTORY)
+                navigate(content.get(row).node, path + CLOUD_PATH_SEP + content.get(row).name);
         };
         table.addMouseListener(new MouseAdapter() {
             @Override
@@ -84,7 +123,7 @@ public final class TabController {
 
         networkQueue.submit(() -> {
             try {
-                navigate(cloud.getHome());
+                navigate(cloud.getHome(), path);
             } catch (IOException e) {
                 errorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
                 cardLayout.show(panel, CARD_ERROR);
@@ -143,7 +182,7 @@ public final class TabController {
         }
     }
 
-    private void navigate(Node node) {
+    private void navigate(Node node, String path) {
         networkQueue.submit(() -> {
             content.clear();
             try {
@@ -157,12 +196,18 @@ public final class TabController {
                     content.add(entry);
                 });
                 SwingUtilities.invokeLater(() -> {
+                    this.path = path;
+                    this.node = node;
+                    pathField.setText(path);
+                    parentButton.setEnabled(path.contains(String.valueOf(CLOUD_PATH_SEP)));
                     tableModel.fireTableDataChanged();
                     cardLayout.show(panel, CARD_TABLE);
                 });
             } catch (IOException e) {
-                errorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
-                cardLayout.show(panel, CARD_ERROR);
+                SwingUtilities.invokeLater(() -> {
+                    errorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
+                    cardLayout.show(panel, CARD_ERROR);
+                });
             } catch (CloudClient.RequestException e) {
                 // TODO: replace with appropriate handler
                 throw new RuntimeException(e);

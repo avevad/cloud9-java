@@ -1,6 +1,7 @@
 package com.avevad.cloud9.desktop;
 
 import javax.swing.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,6 +85,7 @@ public final class DesktopCommon {
     public static final String STRING_FILE_NAME = "file_name";
     public static final String STRING_LOADING = "loading";
     public static final String STRING_CONNECTION_LOST = "connection_lost";
+    public static final String STRING_GO_UP = "go_up";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";
@@ -138,8 +140,16 @@ public final class DesktopCommon {
     public static final String ICON_FOLDER = "folder.png";
     public static final String ICON_FILE = "file.png";
     public static final String ICON_ERROR = "error.png";
+    public static final String ICON_OUTWARDS = "outwards.png";
 
     public static ImageIcon icon(String name) {
         return new ImageIcon(DesktopCommon.class.getResource(ICONS_PATH + name));
+    }
+
+    public static ImageIcon resizeHeight(ImageIcon icon, int height) {
+        int width = (int) (icon.getIconWidth() * ((double) height / icon.getIconHeight()));
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        img.getGraphics().drawImage(icon.getImage(), 0, 0, width, height, null);
+        return new ImageIcon(img);
     }
 }
