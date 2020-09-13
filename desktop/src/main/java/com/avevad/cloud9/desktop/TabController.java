@@ -6,10 +6,7 @@ import com.avevad.cloud9.core.util.TaskQueue;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +22,6 @@ public final class TabController {
     private final TaskQueue networkQueue = new TaskQueue("Network");
     private final CardLayout cardLayout = new CardLayout();
     private static final String CARD_TABLE = "card_table";
-    private static final String CARD_LOADING = "card_loading";
     private static final String CARD_ERROR = "card_error";
     private final JTable table = new JTable();
     private final CloudTableModel tableModel = new CloudTableModel();
@@ -41,11 +37,6 @@ public final class TabController {
         this.windowController = windowController;
         controlClient = cloud;
         panel.setLayout(cardLayout);
-
-        JLabel loadingLabel = new JLabel(string(STRING_LOADING));
-        loadingLabel.setVerticalAlignment(SwingConstants.CENTER);
-        loadingLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        panel.add(loadingLabel, CARD_LOADING);
 
         errorLabel.setVerticalAlignment(SwingConstants.CENTER);
         errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -186,7 +177,6 @@ public final class TabController {
         networkQueue.submit(() -> {
             content.clear();
             try {
-                SwingUtilities.invokeLater(() -> cardLayout.show(panel, CARD_LOADING));
                 controlClient.listDirectory(node, (child, name) -> {
                     DirectoryEntry entry = new DirectoryEntry();
                     entry.node = child;
@@ -201,7 +191,6 @@ public final class TabController {
                     pathField.setText(path);
                     parentButton.setEnabled(path.contains(String.valueOf(CLOUD_PATH_SEP)));
                     tableModel.fireTableDataChanged();
-                    cardLayout.show(panel, CARD_TABLE);
                 });
             } catch (IOException e) {
                 SwingUtilities.invokeLater(() -> {
