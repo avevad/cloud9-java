@@ -63,7 +63,7 @@ public final class TabController {
         table.getColumn(string(STRING_FILE_TYPE)).setMaxWidth(tableModel.fileIcon.getIconWidth());
         table.getColumn(string(STRING_FILE_TYPE)).setMinWidth(tableModel.fileIcon.getIconWidth());
         Runnable rowSelectTask = () -> {
-            int row = table.getSelectedRow();
+            int row = table.getSelectionModel().getAnchorSelectionIndex();
             if (row == -1) return;
             if (content.get(row).type == NODE_TYPE_DIRECTORY) navigate(content.get(row).node);
         };
@@ -127,7 +127,7 @@ public final class TabController {
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 1;
+            return false;
         }
 
         @Override
@@ -139,8 +139,7 @@ public final class TabController {
         @Override
         public String getColumnName(int column) {
             if (column == 0) return string(STRING_FILE_TYPE);
-            if (column == 1) return string(STRING_FILE_NAME);
-            return "";
+            else return string(STRING_FILE_NAME);
         }
     }
 

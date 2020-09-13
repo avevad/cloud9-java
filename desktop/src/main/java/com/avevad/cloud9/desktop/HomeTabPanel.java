@@ -180,6 +180,7 @@ public final class HomeTabPanel {
                         error.value = string(STRING_NEGOTIATION_ERROR);
                     }
                     SwingUtilities.invokeLater(() -> {
+                        quickPasswordField.setText("");
                         if (error.value != null)
                             JOptionPane.showMessageDialog(windowController.frame,
                                     string(STRING_CLOUD_CONNECTION_FAILED, error.value),
