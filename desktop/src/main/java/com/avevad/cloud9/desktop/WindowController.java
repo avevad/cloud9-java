@@ -1,6 +1,6 @@
 package com.avevad.cloud9.desktop;
 
-import com.avevad.cloud9.core.util.CloseButton;
+import com.avevad.cloud9.desktop.util.CloseButton;
 
 import javax.swing.*;
 import java.awt.*;

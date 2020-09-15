@@ -1,5 +1,8 @@
 package com.avevad.cloud9.core;
 
+import com.avevad.cloud9.core.util.Holder;
+
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -27,7 +30,7 @@ public final class CloudCommon {
     public static final int CLOUD_HEADER_LENGTH = 6;
     public static final int CLOUD_FULL_HEADER_LENGTH = CLOUD_HEADER_LENGTH + Short.BYTES;
 
-    public static final char CLOUD_PATH_SEP = '/', CLOUD_PATH_HOME = '~', CLOUD_PATH_NODE = '`';
+    public static final char CLOUD_PATH_SEP = '/', CLOUD_PATH_HOME = '~', CLOUD_PATH_NODE = '#';
 
     public static final int CLOUD_DEFAULT_PORT = 909;
 
@@ -164,5 +167,19 @@ public final class CloudCommon {
         NodeType(int id) {
             this.id = (byte) id;
         }
+    }
+
+    public static Node parsePath(CloudClient client, Node start, String path) throws IOException, CloudClient.RequestException {
+        Node cur = start;
+        for (String dir : path.split(String.valueOf(CLOUD_PATH_SEP))) {
+            if (dir.isEmpty()) continue;
+            Holder<Node> next = new Holder<>();
+            client.listDirectory(cur, (node, name) -> {
+                if (name.equals(dir)) next.value = node;
+            });
+            if (next.value == null) throw new FileNotFoundException(dir);
+            cur = next.value;
+        }
+        return cur;
     }
 }

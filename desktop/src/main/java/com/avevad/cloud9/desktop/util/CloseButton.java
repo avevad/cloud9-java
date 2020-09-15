@@ -1,4 +1,4 @@
-package com.avevad.cloud9.core.util;
+package com.avevad.cloud9.desktop.util;
 
 import javax.swing.*;
 import java.awt.*;

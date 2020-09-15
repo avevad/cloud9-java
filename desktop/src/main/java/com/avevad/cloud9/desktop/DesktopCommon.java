@@ -86,6 +86,12 @@ public final class DesktopCommon {
     public static final String STRING_LOADING = "loading";
     public static final String STRING_CONNECTION_LOST = "connection_lost";
     public static final String STRING_GO_UP = "go_up";
+    public static final String STRING_GO = "go";
+    public static final String STRING_INVALID_PATH = "invalid_path";
+    public static final String STRING_PATH_FORMAT_ALERT = "path_format_alert";
+    public static final String STRING_FILE_NOT_FOUND = "file_not_found";
+    public static final String STRING_REQUEST_ERROR = "request_error";
+    public static final String STRING_INVALID_NODE_ID = "invalid_node_id";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";
@@ -141,6 +147,7 @@ public final class DesktopCommon {
     public static final String ICON_FILE = "file.png";
     public static final String ICON_ERROR = "error.png";
     public static final String ICON_OUTWARDS = "outwards.png";
+    public static final String ICON_RIGHT = "right.png";
 
     public static ImageIcon icon(String name) {
         return new ImageIcon(DesktopCommon.class.getResource(ICONS_PATH + name));

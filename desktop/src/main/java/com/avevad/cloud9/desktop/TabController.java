@@ -7,6 +7,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ public final class TabController {
     private String path = String.valueOf(CLOUD_PATH_HOME);
     private Node node;
     private final JTextField pathField = new JTextField();
+    private final JButton goButton = new JButton();
     private final JButton parentButton = new JButton();
 
     private final List<DirectoryEntry> content = new ArrayList<>();
@@ -57,6 +59,41 @@ public final class TabController {
         tablePanel.add(navPanel, BorderLayout.NORTH);
         panel.add(tablePanel, CARD_TABLE);
 
+        ActionListener goListener = e -> {
+            String path = pathField.getText();
+            Node start;
+            int splitPos = path.indexOf(CLOUD_PATH_SEP);
+            splitPos = splitPos == -1 ? path.length() : splitPos;
+            try {
+                if (path.startsWith(String.valueOf(CLOUD_PATH_HOME))) {
+                    String user = path.substring(1, splitPos);
+                    start = controlClient.getHome(user);
+                } else if (path.startsWith(String.valueOf(CLOUD_PATH_NODE))) {
+                    String node = path.substring(1, splitPos);
+                    try {
+                        start = Node.fromString(node);
+                    } catch (IllegalArgumentException ex) {
+                        JOptionPane.showMessageDialog(windowController.frame, string(STRING_INVALID_NODE_ID, node), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(windowController.frame, string(STRING_INVALID_PATH, string(STRING_PATH_FORMAT_ALERT)), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                try {
+                    navigate(parsePath(controlClient, start, path.substring(splitPos)), path);
+                } catch (FileNotFoundException ex) {
+                    JOptionPane.showMessageDialog(windowController.frame, string(STRING_FILE_NOT_FOUND, ex.getMessage()), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (IOException ex) {
+                errorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
+                cardLayout.show(panel, CARD_ERROR);
+            } catch (CloudClient.RequestException ex) {
+                JOptionPane.showMessageDialog(windowController.frame, string(STRING_REQUEST_ERROR, string(request_status_string(ex.status))), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
+            }
+        };
+
+        pathField.addActionListener(goListener);
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = c.gridy = 0;
         c.gridwidth = c.gridheight = 1;
@@ -64,6 +101,14 @@ public final class TabController {
         c.fill = GridBagConstraints.BOTH;
         navPanel.add(pathField, c);
 
+        goButton.addActionListener(goListener);
+        goButton.setIcon(resizeHeight(icon(ICON_RIGHT), pathField.getFontMetrics(pathField.getFont()).getHeight()));
+        goButton.setToolTipText(string(STRING_GO));
+        c.weightx = 0;
+        c.gridx++;
+        navPanel.add(goButton, c);
+
+        parentButton.setIcon(resizeHeight(icon(ICON_OUTWARDS), pathField.getFontMetrics(pathField.getFont()).getHeight()));
         parentButton.addActionListener(e -> {
             networkQueue.submit(() -> {
                 try {
@@ -82,10 +127,9 @@ public final class TabController {
             });
         });
         parentButton.setToolTipText(string(STRING_GO_UP));
-        c.gridx = 1;
-        c.weightx = 0;
+        c.gridx++;
         navPanel.add(parentButton, c);
-        parentButton.setIcon(resizeHeight(icon(ICON_OUTWARDS), pathField.getFontMetrics(pathField.getFont()).getHeight()));
+
 
         table.setFillsViewportHeight(true);
         table.setModel(tableModel);
@@ -111,6 +155,14 @@ public final class TabController {
                 rowSelectTask.run();
             }
         });
+        table.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                pathField.setText(path);
+            }
+        });
+
+        cardLayout.show(panel, CARD_TABLE);
 
         networkQueue.submit(() -> {
             try {
