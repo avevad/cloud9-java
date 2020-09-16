@@ -22,8 +22,8 @@ public final class TabController {
     public final JPanel panel = new JPanel();
     private final TaskQueue networkQueue = new TaskQueue("Network");
     private final CardLayout cardLayout = new CardLayout();
-    private static final String CARD_TABLE = "card_table";
-    private static final String CARD_ERROR = "card_error";
+    private static final String CARD_CONTENT = "card_content";
+    private static final String CARD_NET_ERROR = "card_net_error";
     private final JTable table = new JTable();
     private final CloudTableModel tableModel = new CloudTableModel();
     private final JLabel errorLabel = new JLabel(icon(ICON_ERROR));
@@ -45,7 +45,7 @@ public final class TabController {
         errorLabel.setVerticalTextPosition(SwingConstants.BOTTOM);
         errorLabel.setHorizontalTextPosition(SwingConstants.CENTER);
         errorLabel.setFont(errorLabel.getFont().deriveFont(18f));
-        panel.add(errorLabel, CARD_ERROR);
+        panel.add(errorLabel, CARD_NET_ERROR);
 
         JScrollPane scrollPane = new JScrollPane();
         scrollPane.setViewportView(table);
@@ -57,7 +57,7 @@ public final class TabController {
         JPanel navPanel = new JPanel();
         navPanel.setLayout(new GridBagLayout());
         tablePanel.add(navPanel, BorderLayout.NORTH);
-        panel.add(tablePanel, CARD_TABLE);
+        panel.add(tablePanel, CARD_CONTENT);
 
         ActionListener goListener = e -> {
             String path = pathField.getText();
@@ -87,10 +87,11 @@ public final class TabController {
                 }
             } catch (IOException ex) {
                 errorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
-                cardLayout.show(panel, CARD_ERROR);
+                cardLayout.show(panel, CARD_NET_ERROR);
             } catch (CloudClient.RequestException ex) {
                 JOptionPane.showMessageDialog(windowController.frame, string(STRING_REQUEST_ERROR, string(request_status_string(ex.status))), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
             }
+
         };
 
         pathField.addActionListener(goListener);
@@ -118,7 +119,7 @@ public final class TabController {
                 } catch (IOException ex) {
                     SwingUtilities.invokeLater(() -> {
                         errorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
-                        cardLayout.show(panel, CARD_ERROR);
+                        cardLayout.show(panel, CARD_NET_ERROR);
                     });
                 } catch (CloudClient.RequestException ex) {
                     // TODO: add appropriate handler
@@ -162,14 +163,14 @@ public final class TabController {
             }
         });
 
-        cardLayout.show(panel, CARD_TABLE);
+        cardLayout.show(panel, CARD_CONTENT);
 
         networkQueue.submit(() -> {
             try {
                 navigate(cloud.getHome(), path);
             } catch (IOException e) {
                 errorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
-                cardLayout.show(panel, CARD_ERROR);
+                cardLayout.show(panel, CARD_NET_ERROR);
             } catch (CloudClient.RequestException e) { // should never happen in normal conditions
                 throw new RuntimeException();
             }
@@ -247,7 +248,7 @@ public final class TabController {
             } catch (IOException e) {
                 SwingUtilities.invokeLater(() -> {
                     errorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
-                    cardLayout.show(panel, CARD_ERROR);
+                    cardLayout.show(panel, CARD_NET_ERROR);
                 });
             } catch (CloudClient.RequestException e) {
                 // TODO: replace with appropriate handler
