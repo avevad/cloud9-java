@@ -24,9 +24,14 @@ public final class TabController {
     private final CardLayout cardLayout = new CardLayout();
     private static final String CARD_CONTENT = "card_content";
     private static final String CARD_NET_ERROR = "card_net_error";
+    private final JPanel tablePanel = new JPanel();
+    private final CardLayout tableLayout = new CardLayout();
+    private static final String CARD_TABLE = "card_table";
+    private static final String CARD_REQ_ERROR = "card_req_error";
     private final JTable table = new JTable();
     private final CloudTableModel tableModel = new CloudTableModel();
-    private final JLabel errorLabel = new JLabel(icon(ICON_ERROR));
+    private final JLabel netErrorLabel = new JLabel(icon(ICON_ERROR));
+    private final JLabel reqErrorLabel = new JLabel(icon(ICON_ERROR));
     private String path = String.valueOf(CLOUD_PATH_HOME);
     private Node node;
     private final JTextField pathField = new JTextField();
@@ -40,24 +45,36 @@ public final class TabController {
         controlClient = cloud;
         panel.setLayout(cardLayout);
 
-        errorLabel.setVerticalAlignment(SwingConstants.CENTER);
-        errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        errorLabel.setVerticalTextPosition(SwingConstants.BOTTOM);
-        errorLabel.setHorizontalTextPosition(SwingConstants.CENTER);
-        errorLabel.setFont(errorLabel.getFont().deriveFont(18f));
-        panel.add(errorLabel, CARD_NET_ERROR);
+        netErrorLabel.setVerticalAlignment(SwingConstants.CENTER);
+        netErrorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        netErrorLabel.setVerticalTextPosition(SwingConstants.BOTTOM);
+        netErrorLabel.setHorizontalTextPosition(SwingConstants.CENTER);
+        netErrorLabel.setFont(netErrorLabel.getFont().deriveFont(18f));
+        panel.add(netErrorLabel, CARD_NET_ERROR);
 
         JScrollPane scrollPane = new JScrollPane();
         scrollPane.setViewportView(table);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        JPanel tablePanel = new JPanel();
-        tablePanel.setLayout(new BorderLayout());
-        tablePanel.add(scrollPane, BorderLayout.CENTER);
+
+        tablePanel.setLayout(tableLayout);
+        tablePanel.add(scrollPane, CARD_TABLE);
+
+        reqErrorLabel.setVerticalAlignment(SwingConstants.CENTER);
+        reqErrorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        reqErrorLabel.setVerticalTextPosition(SwingConstants.BOTTOM);
+        reqErrorLabel.setHorizontalTextPosition(SwingConstants.CENTER);
+        reqErrorLabel.setFont(reqErrorLabel.getFont().deriveFont(18f));
+        tablePanel.add(reqErrorLabel, CARD_REQ_ERROR);
+
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BorderLayout());
+        contentPanel.add(tablePanel, BorderLayout.CENTER);
+
         JPanel navPanel = new JPanel();
         navPanel.setLayout(new GridBagLayout());
-        tablePanel.add(navPanel, BorderLayout.NORTH);
-        panel.add(tablePanel, CARD_CONTENT);
+        contentPanel.add(navPanel, BorderLayout.NORTH);
+        panel.add(contentPanel, CARD_CONTENT);
 
         ActionListener goListener = e -> {
             String path = pathField.getText();
@@ -86,7 +103,7 @@ public final class TabController {
                     JOptionPane.showMessageDialog(windowController.frame, string(STRING_FILE_NOT_FOUND, ex.getMessage()), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
                 }
             } catch (IOException ex) {
-                errorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
+                netErrorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
                 cardLayout.show(panel, CARD_NET_ERROR);
             } catch (CloudClient.RequestException ex) {
                 JOptionPane.showMessageDialog(windowController.frame, string(STRING_REQUEST_ERROR, string(request_status_string(ex.status))), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
@@ -114,16 +131,21 @@ public final class TabController {
             networkQueue.submit(() -> {
                 try {
                     Node parent = controlClient.getNodeParent(node);
-                    String newPath = path.substring(0, path.lastIndexOf(CLOUD_PATH_SEP));
+                    String newPath = path;
+                    while (newPath.endsWith(String.valueOf(CLOUD_PATH_SEP)))
+                        newPath = newPath.substring(0, newPath.length() - 1);
+                    newPath = newPath.substring(0, path.lastIndexOf(CLOUD_PATH_SEP));
                     navigate(parent, newPath);
                 } catch (IOException ex) {
                     SwingUtilities.invokeLater(() -> {
-                        errorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
+                        netErrorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
                         cardLayout.show(panel, CARD_NET_ERROR);
                     });
                 } catch (CloudClient.RequestException ex) {
-                    // TODO: add appropriate handler
-                    throw new RuntimeException(ex);
+                    SwingUtilities.invokeLater(() -> {
+                        reqErrorLabel.setText(string(STRING_REQUEST_ERROR, string(init_status_string(ex.status))));
+                        tableLayout.show(tablePanel, CARD_REQ_ERROR);
+                    });
                 }
             });
         });
@@ -169,7 +191,7 @@ public final class TabController {
             try {
                 navigate(cloud.getHome(), path);
             } catch (IOException e) {
-                errorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
+                netErrorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
                 cardLayout.show(panel, CARD_NET_ERROR);
             } catch (CloudClient.RequestException e) { // should never happen in normal conditions
                 throw new RuntimeException();
@@ -238,22 +260,25 @@ public final class TabController {
                     entry.type = nodeInfo.type;
                     content.add(entry);
                 });
-                SwingUtilities.invokeLater(() -> {
-                    this.path = path;
-                    this.node = node;
-                    pathField.setText(path);
-                    parentButton.setEnabled(path.contains(String.valueOf(CLOUD_PATH_SEP)));
-                    tableModel.fireTableDataChanged();
-                });
+                SwingUtilities.invokeLater(() -> tableLayout.show(tablePanel, CARD_TABLE));
             } catch (IOException e) {
                 SwingUtilities.invokeLater(() -> {
-                    errorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
+                    netErrorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
                     cardLayout.show(panel, CARD_NET_ERROR);
                 });
             } catch (CloudClient.RequestException e) {
-                // TODO: replace with appropriate handler
-                throw new RuntimeException(e);
+                SwingUtilities.invokeLater(() -> {
+                    reqErrorLabel.setText(string(STRING_REQUEST_ERROR, string(request_status_string(e.status))));
+                    tableLayout.show(tablePanel, CARD_REQ_ERROR);
+                });
             }
+            SwingUtilities.invokeLater(() -> {
+                this.path = path;
+                this.node = node;
+                pathField.setText(path);
+                parentButton.setEnabled(path.matches(".*[^/]/+[^/].*"));
+                tableModel.fireTableDataChanged();
+            });
         });
     }
 
