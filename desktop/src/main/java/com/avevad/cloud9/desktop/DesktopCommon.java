@@ -92,6 +92,7 @@ public final class DesktopCommon {
     public static final String STRING_FILE_NOT_FOUND = "file_not_found";
     public static final String STRING_REQUEST_ERROR = "request_error";
     public static final String STRING_INVALID_NODE_ID = "invalid_node_id";
+    public static final String STRING_FILES_COUNT = "files_count";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";

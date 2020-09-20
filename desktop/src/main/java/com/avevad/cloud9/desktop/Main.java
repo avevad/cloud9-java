@@ -21,7 +21,7 @@ public class Main {
         FlatLightLaf.install();
         FlatDarculaLaf.install();
         try {
-            UIManager.setLookAndFeel(new FlatDarculaLaf());
+            UIManager.setLookAndFeel(new FlatLightLaf());
         } catch (UnsupportedLookAndFeelException ignored) {
         }
         MainController controller = new MainController();

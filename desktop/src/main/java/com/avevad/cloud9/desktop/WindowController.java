@@ -69,7 +69,7 @@ public final class WindowController {
     }
 
     public void newTab(TabController tabController, String title, boolean display) {
-        tabbedPane.insertTab(null, null, tabController.panel, null, tabs.size());
+        tabbedPane.insertTab(null, null, tabController.root, null, tabs.size());
         JPanel tabPanel = new JPanel();
         tabPanel.setOpaque(false);
         tabPanel.setLayout(new BorderLayout());

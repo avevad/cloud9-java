@@ -1,6 +1,7 @@
 package com.avevad.cloud9.desktop;
 
 import com.avevad.cloud9.core.CloudClient;
+import com.avevad.cloud9.core.util.Holder;
 import com.avevad.cloud9.core.util.TaskQueue;
 
 import javax.swing.*;
@@ -19,7 +20,9 @@ public final class TabController {
     private static final String NAVIGATE = "navigate";
     public final WindowController windowController;
     private final CloudClient controlClient;
-    public final JPanel panel = new JPanel();
+    public final JPanel root = new JPanel();
+    private final JSplitPane splitPane;
+    private final JPanel panel = new JPanel();
     private final TaskQueue networkQueue = new TaskQueue("Network");
     private final CardLayout cardLayout = new CardLayout();
     private static final String CARD_CONTENT = "card_content";
@@ -37,12 +40,40 @@ public final class TabController {
     private final JTextField pathField = new JTextField();
     private final JButton goButton = new JButton();
     private final JButton parentButton = new JButton();
+    private boolean firstNavigate = true;
+    private final JLabel statusLabel = new JLabel();
 
     private final List<DirectoryEntry> content = new ArrayList<>();
 
     public TabController(WindowController windowController, CloudClient cloud) {
+        GridBagConstraints c;
+
         this.windowController = windowController;
         controlClient = cloud;
+
+        root.setLayout(new BorderLayout());
+
+        JPanel operationsPanel = new JPanel();
+
+        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel, operationsPanel);
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setResizeWeight(1);
+        splitPane.setDividerLocation(1d);
+        root.add(splitPane, BorderLayout.CENTER);
+
+        JPanel statusPanel = new JPanel();
+        statusPanel.setLayout(new GridBagLayout());
+        statusLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        statusLabel.setVerticalAlignment(SwingConstants.CENTER);
+        c = new GridBagConstraints();
+        c.fill = GridBagConstraints.BOTH;
+        c.gridx = c.gridy = 0;
+        c.weightx = 1;
+        c.weighty = 0;
+        statusPanel.add(statusLabel, c);
+
+        root.add(statusPanel, BorderLayout.SOUTH);
+
         panel.setLayout(cardLayout);
 
         netErrorLabel.setVerticalAlignment(SwingConstants.CENTER);
@@ -112,7 +143,7 @@ public final class TabController {
         };
 
         pathField.addActionListener(goListener);
-        GridBagConstraints c = new GridBagConstraints();
+        c = new GridBagConstraints();
         c.gridx = c.gridy = 0;
         c.gridwidth = c.gridheight = 1;
         c.weightx = 1;
@@ -252,24 +283,34 @@ public final class TabController {
         networkQueue.submit(() -> {
             content.clear();
             try {
+                SwingUtilities.invokeLater(() -> statusLabel.setText(STRING_LOADING));
+                Holder<Integer> fileCount = new Holder<>(0);
+                Holder<Integer> directoryCount = new Holder<>(0);
                 controlClient.listDirectory(node, (child, name) -> {
                     DirectoryEntry entry = new DirectoryEntry();
                     entry.node = child;
                     entry.name = name;
                     CloudClient.NodeInfo nodeInfo = controlClient.getNodeInfo(child);
                     entry.type = nodeInfo.type;
+                    if (nodeInfo.type == NODE_TYPE_DIRECTORY) directoryCount.value++;
+                    if (nodeInfo.type == NODE_TYPE_FILE) fileCount.value++;
                     content.add(entry);
                 });
-                SwingUtilities.invokeLater(() -> tableLayout.show(tablePanel, CARD_TABLE));
+                SwingUtilities.invokeLater(() -> {
+                    tableLayout.show(tablePanel, CARD_TABLE);
+                    statusLabel.setText(string(STRING_FILES_COUNT, fileCount.value, directoryCount.value));
+                });
             } catch (IOException e) {
                 SwingUtilities.invokeLater(() -> {
                     netErrorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
                     cardLayout.show(panel, CARD_NET_ERROR);
+                    statusLabel.setText(string(STRING_ERROR));
                 });
             } catch (CloudClient.RequestException e) {
                 SwingUtilities.invokeLater(() -> {
                     reqErrorLabel.setText(string(STRING_REQUEST_ERROR, string(request_status_string(e.status))));
                     tableLayout.show(tablePanel, CARD_REQ_ERROR);
+                    statusLabel.setText(string(STRING_ERROR));
                 });
             }
             SwingUtilities.invokeLater(() -> {
