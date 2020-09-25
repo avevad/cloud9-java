@@ -137,7 +137,7 @@ public final class TabController {
                 netErrorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
                 cardLayout.show(panel, CARD_NET_ERROR);
             } catch (CloudClient.RequestException ex) {
-                JOptionPane.showMessageDialog(windowController.frame, string(STRING_REQUEST_ERROR, string(request_status_string(ex.status))), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(windowController.frame, string(STRING_REQUEST_ERROR, string(requestStatusString(ex.status))), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
             }
 
         };
@@ -174,7 +174,7 @@ public final class TabController {
                     });
                 } catch (CloudClient.RequestException ex) {
                     SwingUtilities.invokeLater(() -> {
-                        reqErrorLabel.setText(string(STRING_REQUEST_ERROR, string(init_status_string(ex.status))));
+                        reqErrorLabel.setText(string(STRING_REQUEST_ERROR, string(initStatusString(ex.status))));
                         tableLayout.show(tablePanel, CARD_REQ_ERROR);
                     });
                 }
@@ -308,7 +308,7 @@ public final class TabController {
                 });
             } catch (CloudClient.RequestException e) {
                 SwingUtilities.invokeLater(() -> {
-                    reqErrorLabel.setText(string(STRING_REQUEST_ERROR, string(request_status_string(e.status))));
+                    reqErrorLabel.setText(string(STRING_REQUEST_ERROR, string(requestStatusString(e.status))));
                     tableLayout.show(tablePanel, CARD_REQ_ERROR);
                     statusLabel.setText(string(STRING_ERROR));
                 });

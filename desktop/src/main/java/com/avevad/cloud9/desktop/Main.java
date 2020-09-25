@@ -9,6 +9,7 @@ import static com.avevad.cloud9.desktop.DesktopCommon.*;
 
 public class Main {
     public static void main(String[] args) {
+        System.setProperty("awt.useSystemAAFontSettings", "on");
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
             SwingUtilities.invokeLater(() -> {
                 System.err.print("Unhandled exception in thread '" + t.getName() + "': ");

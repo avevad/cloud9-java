@@ -108,7 +108,7 @@ public final class DesktopCommon {
         INIT_STATUS_STRINGS.put(INIT_ERR_INVALID_USERNAME, "init_error_invalid_username");
     }
 
-    public static String init_status_string(short status) {
+    public static String initStatusString(short status) {
         return INIT_STATUS_STRINGS.getOrDefault(status, STRING_INIT_ERROR_UNKNOWN);
     }
 
@@ -137,7 +137,7 @@ public final class DesktopCommon {
         REQUEST_STATUS_STRINGS.put(REQUEST_ERR_DIRECTORY_IS_NOT_EMPTY, "request_error_directory_is_not_empty");
     }
 
-    public static String request_status_string(short status) {
+    public static String requestStatusString(short status) {
         return REQUEST_STATUS_STRINGS.getOrDefault(status, STRING_REQUEST_ERROR_UNKNOWN);
     }
 
@@ -149,6 +149,7 @@ public final class DesktopCommon {
     public static final String ICON_ERROR = "error.png";
     public static final String ICON_OUTWARDS = "outwards.png";
     public static final String ICON_RIGHT = "right.png";
+    public static final String ICON_CLOSE = "close.png";
 
     public static ImageIcon icon(String name) {
         return new ImageIcon(DesktopCommon.class.getResource(ICONS_PATH + name));

@@ -1,7 +1,5 @@
 package com.avevad.cloud9.desktop;
 
-import com.avevad.cloud9.desktop.util.CloseButton;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -75,7 +73,9 @@ public final class WindowController {
         tabPanel.setLayout(new BorderLayout());
         JLabel tabHeader = new JLabel(title + " ");
         tabPanel.add(tabHeader, BorderLayout.CENTER);
-        JButton tabCloseButton = new CloseButton("");
+        JButton tabCloseButton = new JButton(resizeHeight(icon(ICON_CLOSE), tabHeader.getFontMetrics(tabHeader.getFont()).getHeight()));
+        tabCloseButton.setBorderPainted(false);
+        tabCloseButton.setContentAreaFilled(false);
         tabCloseButton.addActionListener(e -> closeTab(tabController));
         tabPanel.add(tabCloseButton, BorderLayout.LINE_END);
         tabbedPane.setTabComponentAt(tabs.size(), tabPanel);

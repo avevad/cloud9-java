@@ -175,7 +175,7 @@ public final class HomeTabPanel {
                     } catch (IOException ex) {
                         error.value = string(STRING_NET_CONNECTION_FAILED, ex.getMessage());
                     } catch (CloudClient.InitException ex) {
-                        error.value = string(STRING_AUTH_FAILED, string(init_status_string(ex.status)));
+                        error.value = string(STRING_AUTH_FAILED, string(initStatusString(ex.status)));
                     } catch (CloudClient.ProtocolException ex) {
                         error.value = string(STRING_NEGOTIATION_ERROR);
                     }
