@@ -21,13 +21,17 @@ public final class MainController {
     }
 
     public void closeWindow(WindowController windowController) {
-        if(!windows.contains(windowController)) return;
+        if (!windows.contains(windowController)) return;
         windows.remove(windowController);
         windowController.dispose();
-        if(windows.isEmpty()) SwingUtilities.invokeLater(() -> System.exit(0));
+        if (windows.isEmpty()) SwingUtilities.invokeLater(() -> System.exit(0));
     }
 
     public void closeAllWindows() {
-        while(!windows.isEmpty()) closeWindow(windows.get(windows.size() - 1));
+        while (!windows.isEmpty()) closeWindow(windows.get(windows.size() - 1));
+    }
+
+    public void updateLaf() {
+        for (WindowController windowController : windows) SwingUtilities.updateComponentTreeUI(windowController.frame);
     }
 }

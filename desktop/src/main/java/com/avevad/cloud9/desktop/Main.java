@@ -1,7 +1,6 @@
 package com.avevad.cloud9.desktop;
 
-import com.formdev.flatlaf.FlatDarculaLaf;
-import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
 
 import javax.swing.*;
 
@@ -19,11 +18,15 @@ public class Main {
             });
         });
         loadConfig();
-        FlatLightLaf.install();
-        FlatDarculaLaf.install();
-        try {
-            UIManager.setLookAndFeel(new FlatLightLaf());
-        } catch (UnsupportedLookAndFeelException ignored) {
+        if (getConfig().lookAndFeel == null) FlatIntelliJLaf.install();
+        else {
+            try {
+                UIManager.setLookAndFeel(getConfig().lookAndFeel);
+            } catch (IllegalAccessException | UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException e) {
+                getConfig().lookAndFeel = null;
+                saveConfig();
+                throw new RuntimeException(e);
+            }
         }
         MainController controller = new MainController();
         controller.newWindow();

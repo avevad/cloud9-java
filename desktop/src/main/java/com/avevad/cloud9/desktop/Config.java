@@ -7,4 +7,5 @@ public final class Config implements Serializable {
     public Integer lastQuickPort = null;
     public String lastQuickLogin = null;
     public Boolean lastQuickSecure = null;
+    public String lookAndFeel = null;
 }

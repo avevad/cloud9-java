@@ -1,5 +1,7 @@
 package com.avevad.cloud9.desktop;
 
+import com.avevad.cloud9.core.util.Pair;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -34,8 +36,31 @@ public final class WindowController {
         JMenu fileMenu = new JMenu(string(STRING_FILE));
         fileMenu.add(exitMenuItem);
 
+        JMenu lafSubmenu = new JMenu(string(STRING_LOOK_AND_FEEL));
+        ButtonGroup lafGroup = new ButtonGroup();
+        for (Pair<String, String> laf : iterateLafs()) {
+            JRadioButtonMenuItem item = new JRadioButtonMenuItem(laf.b);
+            item.setSelected(UIManager.getLookAndFeel().getClass().getCanonicalName().equals(laf.a));
+            item.addActionListener(e -> {
+                try {
+                    UIManager.setLookAndFeel(laf.a);
+                    mainController.updateLaf();
+                    getConfig().lookAndFeel = laf.a;
+                    saveConfig();
+                } catch (ClassNotFoundException | UnsupportedLookAndFeelException | IllegalAccessException | InstantiationException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+            lafSubmenu.add(item);
+            lafGroup.add(item);
+        }
+
+        JMenu settingsMenu = new JMenu(string(STRING_SETTINGS));
+        settingsMenu.add(lafSubmenu);
+
         JMenuBar menuBar = new JMenuBar();
         menuBar.add(fileMenu);
+        menuBar.add(settingsMenu);
 
         frame.setJMenuBar(menuBar);
 

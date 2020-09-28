@@ -1,11 +1,15 @@
 package com.avevad.cloud9.desktop;
 
+import com.avevad.cloud9.core.util.Pair;
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 
 import static com.avevad.cloud9.core.CloudCommon.*;
 
@@ -93,6 +97,8 @@ public final class DesktopCommon {
     public static final String STRING_REQUEST_ERROR = "request_error";
     public static final String STRING_INVALID_NODE_ID = "invalid_node_id";
     public static final String STRING_FILES_COUNT = "files_count";
+    public static final String STRING_SETTINGS = "settings";
+    public static final String STRING_LOOK_AND_FEEL = "look_and_feel";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";
@@ -106,6 +112,22 @@ public final class DesktopCommon {
         INIT_STATUS_STRINGS.put(INIT_ERR_INVALID_INVITE_CODE, "init_error_invalid_invite_code");
         INIT_STATUS_STRINGS.put(INIT_ERR_USER_EXISTS, "init_error_user_exists");
         INIT_STATUS_STRINGS.put(INIT_ERR_INVALID_USERNAME, "init_error_invalid_username");
+    }
+
+    private static List<Pair<String, String>> lafs = new LinkedList<>();
+
+    static {
+        for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+            lafs.add(new Pair<>(info.getClassName(), info.getName()));
+        }
+        lafs.add(new Pair<>(FlatLightLaf.class.getCanonicalName(), "Flat Light"));
+        lafs.add(new Pair<>(FlatDarkLaf.class.getCanonicalName(), "Flat Dark"));
+        lafs.add(new Pair<>(FlatIntelliJLaf.class.getCanonicalName(), "Flat IntelliJ"));
+        lafs.add(new Pair<>(FlatDarculaLaf.class.getCanonicalName(), "Flat Darcula"));
+    }
+
+    public static Iterable<Pair<String, String>> iterateLafs() {
+        return () -> lafs.iterator();
     }
 
     public static String initStatusString(short status) {
