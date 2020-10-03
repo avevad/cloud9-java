@@ -11,6 +11,7 @@ import java.awt.event.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static com.avevad.cloud9.core.CloudCommon.*;
@@ -20,10 +21,13 @@ public final class TabController {
     private static final String NAVIGATE = "navigate";
     public final WindowController windowController;
     private final CloudClient controlClient;
+    private final CloudClient dataClient;
+    private TasksPanel tasksPanel = new TasksPanel();
     public final JPanel root = new JPanel();
     private final JSplitPane splitPane;
     private final JPanel panel = new JPanel();
-    private final TaskQueue networkQueue = new TaskQueue("Network");
+    private final TaskQueue controlQueue = new TaskQueue("Control");
+    private final TaskQueue dataQueue = new TaskQueue("Data");
     private final CardLayout cardLayout = new CardLayout();
     private static final String CARD_CONTENT = "card_content";
     private static final String CARD_NET_ERROR = "card_net_error";
@@ -45,17 +49,18 @@ public final class TabController {
 
     private final List<DirectoryEntry> content = new ArrayList<>();
 
-    public TabController(WindowController windowController, CloudClient cloud) {
+    private final JPopupMenu tablePopup = new JPopupMenu();
+
+    public TabController(WindowController windowController, CloudClient controlClient, CloudClient dataClient) {
+        this.dataClient = dataClient;
         GridBagConstraints c;
 
         this.windowController = windowController;
-        controlClient = cloud;
+        this.controlClient = controlClient;
 
         root.setLayout(new BorderLayout());
 
-        JPanel operationsPanel = new JPanel();
-
-        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel, operationsPanel);
+        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel, tasksPanel.panel);
         splitPane.setOneTouchExpandable(true);
         splitPane.setResizeWeight(1);
         splitPane.setDividerLocation(1d);
@@ -115,7 +120,7 @@ public final class TabController {
             try {
                 if (path.startsWith(String.valueOf(CLOUD_PATH_HOME))) {
                     String user = path.substring(1, splitPos);
-                    start = controlClient.getHome(user);
+                    start = this.controlClient.getHome(user);
                 } else if (path.startsWith(String.valueOf(CLOUD_PATH_NODE))) {
                     String node = path.substring(1, splitPos);
                     try {
@@ -129,7 +134,7 @@ public final class TabController {
                     return;
                 }
                 try {
-                    navigate(parsePath(controlClient, start, path.substring(splitPos)), path);
+                    navigate(parsePath(this.controlClient, start, path.substring(splitPos)), path);
                 } catch (FileNotFoundException ex) {
                     JOptionPane.showMessageDialog(windowController.frame, string(STRING_FILE_NOT_FOUND, ex.getMessage()), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
                 }
@@ -159,9 +164,9 @@ public final class TabController {
 
         parentButton.setIcon(resizeHeight(icon(ICON_OUTWARDS), pathField.getFontMetrics(pathField.getFont()).getHeight()));
         parentButton.addActionListener(e -> {
-            networkQueue.submit(() -> {
+            controlQueue.submit(() -> {
                 try {
-                    Node parent = controlClient.getNodeParent(node);
+                    Node parent = this.controlClient.getNodeParent(node);
                     String newPath = path;
                     while (newPath.endsWith(String.valueOf(CLOUD_PATH_SEP)))
                         newPath = newPath.substring(0, newPath.length() - 1);
@@ -201,6 +206,21 @@ public final class TabController {
                 if (e.getClickCount() == 2) rowSelectTask.run();
             }
         });
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                showPopup(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                showPopup(e);
+            }
+
+            private void showPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) tablePopup.show(e.getComponent(), e.getX(), e.getY());
+            }
+        });
         KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
         table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enter, NAVIGATE);
         table.getActionMap().put(NAVIGATE, new AbstractAction() {
@@ -218,9 +238,80 @@ public final class TabController {
 
         cardLayout.show(panel, CARD_CONTENT);
 
-        networkQueue.submit(() -> {
+        JMenuItem uploadPopupItem = new JMenuItem(string(STRING_UPLOAD));
+        uploadPopupItem.addActionListener(e -> {
+            Holder<Boolean> suspended = new Holder<>(false);
+            Holder<Boolean> cancelled = new Holder<>(false);
+            final Object lock = new Object();
+            TasksPanel.TaskCallback callback = tasksPanel.addTask("Test task " + new Date(), new TasksPanel.TaskController() {
+                @Override
+                public void suspend() {
+                    suspended.value = true;
+                }
+
+                @Override
+                public void cancel() {
+                    cancelled.value = true;
+                }
+
+                @Override
+                public void resume() {
+                    synchronized (lock) {
+                        suspended.value = false;
+                        lock.notifyAll();
+                    }
+                }
+            });
+            if (splitPane.getDividerLocation() == splitPane.getWidth())
+                splitPane.setDividerLocation(splitPane.getLastDividerLocation());
+            callback.setStatus("Pending");
+            dataQueue.submit(() -> {
+                long n = 20;
+                long d = 300;
+                for (int i = 0; i < n; i++) {
+                    try {
+                        Thread.sleep(d);
+                    } catch (InterruptedException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    double progress = (i + 1) / (double) n;
+                    String status = "Running " + (i + 1) + "/" + n;
+                    SwingUtilities.invokeLater(() -> {
+                        callback.setProgress(progress);
+                        callback.setStatus(status);
+                    });
+                    if (cancelled.value) {
+                        SwingUtilities.invokeLater(() -> {
+                            callback.setStatus("Cancelled");
+                            callback.setFinished();
+                        });
+                        return;
+                    }
+                    if (suspended.value) {
+                        SwingUtilities.invokeLater(() -> callback.setSuspended(true));
+                        synchronized (lock) {
+                            while (suspended.value) {
+                                try {
+                                    lock.wait();
+                                } catch (InterruptedException ex) {
+                                    throw new RuntimeException(ex);
+                                }
+                            }
+                        }
+                        SwingUtilities.invokeLater(() -> callback.setSuspended(false));
+                    }
+                }
+                SwingUtilities.invokeLater(() -> {
+                    callback.setStatus("Finished");
+                    callback.setFinished();
+                });
+            });
+        });
+        tablePopup.add(uploadPopupItem);
+
+        controlQueue.submit(() -> {
             try {
-                navigate(cloud.getHome(), path);
+                navigate(controlClient.getHome(), path);
             } catch (IOException e) {
                 netErrorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
                 cardLayout.show(panel, CARD_NET_ERROR);
@@ -230,8 +321,13 @@ public final class TabController {
         });
     }
 
+    public void init() {
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(1f));
+    }
+
     public void destroy() {
         controlClient.disconnect();
+        dataClient.disconnect();
     }
 
     private final class CloudTableModel extends AbstractTableModel {
@@ -280,7 +376,7 @@ public final class TabController {
     }
 
     private void navigate(Node node, String path) {
-        networkQueue.submit(() -> {
+        controlQueue.submit(() -> {
             content.clear();
             try {
                 SwingUtilities.invokeLater(() -> statusLabel.setText(STRING_LOADING));

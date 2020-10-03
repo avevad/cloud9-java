@@ -99,6 +99,8 @@ public final class DesktopCommon {
     public static final String STRING_FILES_COUNT = "files_count";
     public static final String STRING_SETTINGS = "settings";
     public static final String STRING_LOOK_AND_FEEL = "look_and_feel";
+    public static final String STRING_TASKS = "tasks";
+    public static final String STRING_UPLOAD = "upload";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";
@@ -171,7 +173,10 @@ public final class DesktopCommon {
     public static final String ICON_ERROR = "error.png";
     public static final String ICON_OUTWARDS = "outwards.png";
     public static final String ICON_RIGHT = "right.png";
-    public static final String ICON_CLOSE = "close.png";
+    public static final String ICON_CROSS = "cross.png";
+    public static final String ICON_PAUSE = "pause.png";
+    public static final String ICON_PLAY = "play.png";
+    public static final String ICON_MINUS = "minus.png";
 
     public static ImageIcon icon(String name) {
         return new ImageIcon(DesktopCommon.class.getResource(ICONS_PATH + name));
@@ -182,5 +187,10 @@ public final class DesktopCommon {
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         img.getGraphics().drawImage(icon.getImage(), 0, 0, width, height, null);
         return new ImageIcon(img);
+    }
+
+    public static void makeBorderless(JButton button) {
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
     }
 }

@@ -164,12 +164,20 @@ public final class HomeTabPanel {
                     getConfig().lastQuickSecure = quickSecureCheck.isSelected();
                     saveConfig();
                     Holder<String> error = new Holder<>();
-                    Holder<CloudClient> cloud = new Holder<>();
+                    Holder<CloudClient> controlClient = new Holder<>();
+                    Holder<CloudClient> dataClient = new Holder<>();
                     try {
-                        CloudConnection connection;
-                        if(quickSecureCheck.isSelected()) connection = new SSLConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
-                        else connection = new TCPConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
-                        cloud.value = new CloudClient(connection, quickLoginField.getText(), () -> new String(quickPasswordField.getPassword()));
+                        CloudConnection controlConnection, dataConnection;
+                        if (quickSecureCheck.isSelected()) {
+                            controlConnection = new SSLConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
+                            dataConnection = new SSLConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
+                        } else {
+                            controlConnection = new TCPConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
+                            dataConnection = new TCPConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
+                        }
+                        Holder<String> password = new Holder<>();
+                        controlClient.value = new CloudClient(controlConnection, quickLoginField.getText(), () -> password.value = new String(quickPasswordField.getPassword()));
+                        dataClient.value = new CloudClient(dataConnection, quickLoginField.getText(), () -> password.value);
                     } catch (UnknownHostException ex) {
                         error.value = string(STRING_UNKNOWN_HOST, ex.getMessage());
                     } catch (IOException ex) {
@@ -187,8 +195,8 @@ public final class HomeTabPanel {
                                     string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
                         quickButton.setEnabled(true);
                         quickButton.setText(string(STRING_CONNECT));
-                        if(cloud.value != null) windowController.newTab(
-                                new TabController(windowController, cloud.value),
+                        if (controlClient.value != null && dataClient.value != null) windowController.newTab(
+                                new TabController(windowController, controlClient.value, dataClient.value),
                                 quickLoginField.getText() + "@" + quickHostField.getText(), true);
                     });
                 });

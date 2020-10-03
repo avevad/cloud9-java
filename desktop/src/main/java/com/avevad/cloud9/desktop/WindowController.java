@@ -98,14 +98,14 @@ public final class WindowController {
         tabPanel.setLayout(new BorderLayout());
         JLabel tabHeader = new JLabel(title + " ");
         tabPanel.add(tabHeader, BorderLayout.CENTER);
-        JButton tabCloseButton = new JButton(resizeHeight(icon(ICON_CLOSE), tabHeader.getFontMetrics(tabHeader.getFont()).getHeight()));
-        tabCloseButton.setBorderPainted(false);
-        tabCloseButton.setContentAreaFilled(false);
+        JButton tabCloseButton = new JButton(resizeHeight(icon(ICON_CROSS), tabHeader.getFontMetrics(tabHeader.getFont()).getHeight()));
+        makeBorderless(tabCloseButton);
         tabCloseButton.addActionListener(e -> closeTab(tabController));
         tabPanel.add(tabCloseButton, BorderLayout.LINE_END);
         tabbedPane.setTabComponentAt(tabs.size(), tabPanel);
         if (display) tabbedPane.setSelectedIndex(tabs.size());
         tabs.add(tabController);
+        tabController.init();
     }
 
     public void closeTab(TabController tabController) {
