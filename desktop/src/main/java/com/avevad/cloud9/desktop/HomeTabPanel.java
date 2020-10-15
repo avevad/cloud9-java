@@ -44,7 +44,7 @@ public final class HomeTabPanel {
         panel.add(quickHostLabel, c);
 
         JTextField quickHostField = new JTextField();
-        if(getConfig().lastQuickHost != null) quickHostField.setText(getConfig().lastQuickHost);
+        if (getConfig().lastQuickHost != null) quickHostField.setText(getConfig().lastQuickHost);
         c.gridx = 2;
         c.gridy = 1;
         c.gridwidth = 2;
@@ -63,7 +63,7 @@ public final class HomeTabPanel {
         panel.add(quickPortLabel, c);
 
         JTextField quickPortField = new JTextField("" + CloudCommon.CLOUD_DEFAULT_PORT);
-        if(getConfig().lastQuickPort != null) quickPortField.setText(String.valueOf(getConfig().lastQuickPort));
+        if (getConfig().lastQuickPort != null) quickPortField.setText(String.valueOf(getConfig().lastQuickPort));
         c.gridx = 2;
         c.gridy = 2;
         c.gridwidth = 2;
@@ -82,7 +82,7 @@ public final class HomeTabPanel {
         panel.add(quickLoginPasswordLabel, c);
 
         JTextField quickLoginField = new JTextField(8);
-        if(getConfig().lastQuickLogin != null) quickLoginField.setText(getConfig().lastQuickLogin);
+        if (getConfig().lastQuickLogin != null) quickLoginField.setText(getConfig().lastQuickLogin);
         c.gridx = 2;
         c.gridy = 3;
         c.gridwidth = 1;
@@ -109,7 +109,7 @@ public final class HomeTabPanel {
         panel.add(quickSecureLabel, c);
 
         JCheckBox quickSecureCheck = new JCheckBox();
-        if(getConfig().lastQuickSecure != null) quickSecureCheck.setSelected(getConfig().lastQuickSecure);
+        if (getConfig().lastQuickSecure != null) quickSecureCheck.setSelected(getConfig().lastQuickSecure);
         else quickSecureCheck.setSelected(true);
         c.gridx = 2;
         c.gridy = 4;
@@ -165,19 +165,15 @@ public final class HomeTabPanel {
                     saveConfig();
                     Holder<String> error = new Holder<>();
                     Holder<CloudClient> controlClient = new Holder<>();
-                    Holder<CloudClient> dataClient = new Holder<>();
                     try {
-                        CloudConnection controlConnection, dataConnection;
+                        CloudConnection controlConnection;
                         if (quickSecureCheck.isSelected()) {
                             controlConnection = new SSLConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
-                            dataConnection = new SSLConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
                         } else {
                             controlConnection = new TCPConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
-                            dataConnection = new TCPConnection(quickHostField.getText(), Integer.parseInt(quickPortField.getText()));
                         }
                         Holder<String> password = new Holder<>();
                         controlClient.value = new CloudClient(controlConnection, quickLoginField.getText(), () -> password.value = new String(quickPasswordField.getPassword()));
-                        dataClient.value = new CloudClient(dataConnection, quickLoginField.getText(), () -> password.value);
                     } catch (UnknownHostException ex) {
                         error.value = string(STRING_UNKNOWN_HOST, ex.getMessage());
                     } catch (IOException ex) {
@@ -195,8 +191,8 @@ public final class HomeTabPanel {
                                     string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
                         quickButton.setEnabled(true);
                         quickButton.setText(string(STRING_CONNECT));
-                        if (controlClient.value != null && dataClient.value != null) windowController.newTab(
-                                new TabController(windowController, controlClient.value, dataClient.value),
+                        if (controlClient.value != null) windowController.newTab(
+                                new TabController(windowController, controlClient.value),
                                 quickLoginField.getText() + "@" + quickHostField.getText(), true);
                     });
                 });

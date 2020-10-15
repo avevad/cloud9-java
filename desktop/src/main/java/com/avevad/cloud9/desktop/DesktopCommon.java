@@ -114,6 +114,7 @@ public final class DesktopCommon {
         INIT_STATUS_STRINGS.put(INIT_ERR_INVALID_INVITE_CODE, "init_error_invalid_invite_code");
         INIT_STATUS_STRINGS.put(INIT_ERR_USER_EXISTS, "init_error_user_exists");
         INIT_STATUS_STRINGS.put(INIT_ERR_INVALID_USERNAME, "init_error_invalid_username");
+        INIT_STATUS_STRINGS.put(INIT_ERR_INVALID_TOKEN, "init_error_invalid_token");
     }
 
     private static List<Pair<String, String>> lafs = new LinkedList<>();

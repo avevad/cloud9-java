@@ -21,7 +21,7 @@ public final class TabController {
     private static final String NAVIGATE = "navigate";
     public final WindowController windowController;
     private final CloudClient controlClient;
-    private final CloudClient dataClient;
+    private CloudClient dataClient = null;
     private TasksPanel tasksPanel = new TasksPanel();
     public final JPanel root = new JPanel();
     private final JSplitPane splitPane;
@@ -51,8 +51,7 @@ public final class TabController {
 
     private final JPopupMenu tablePopup = new JPopupMenu();
 
-    public TabController(WindowController windowController, CloudClient controlClient, CloudClient dataClient) {
-        this.dataClient = dataClient;
+    public TabController(WindowController windowController, CloudClient controlClient) {
         GridBagConstraints c;
 
         this.windowController = windowController;
@@ -327,7 +326,7 @@ public final class TabController {
 
     public void destroy() {
         controlClient.disconnect();
-        dataClient.disconnect();
+        if (dataClient != null) dataClient.disconnect();
     }
 
     private final class CloudTableModel extends AbstractTableModel {
