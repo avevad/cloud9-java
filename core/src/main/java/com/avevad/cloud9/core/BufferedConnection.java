@@ -40,6 +40,10 @@ public final class BufferedConnection implements CloudConnection {
         return connection.isOpen();
     }
 
+    public CloudConnection reconnect() throws IOException {
+        return new BufferedConnection(connection.reconnect(), buffer.length);
+    }
+
     @Override
     public void close() {
         connection.close();

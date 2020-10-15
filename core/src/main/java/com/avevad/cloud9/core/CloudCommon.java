@@ -16,7 +16,7 @@ public final class CloudCommon {
 
     public static final String CLOUD_CHARSET = "UTF-8";
 
-    public static final short CLOUD_RELEASE_CODE = 1;
+    public static final short CLOUD_RELEASE_CODE = 2;
     public static final String CLOUD_RELEASE_NAME = "1.0.0";
 
     public static final byte[] CLOUD_HEADER = new byte[]{
@@ -38,6 +38,7 @@ public final class CloudCommon {
 
     public static final short INIT_CMD_AUTH = 1;
     public static final short INIT_CMD_REGISTER = 2;
+    public static final short INIT_CMD_TOKEN = 3;
 
     public static final short INIT_OK = 0;
     public static final short INIT_ERR_BODY_TOO_LARGE = 1;
@@ -47,6 +48,7 @@ public final class CloudCommon {
     public static final short INIT_ERR_INVALID_INVITE_CODE = 5;
     public static final short INIT_ERR_USER_EXISTS = 6;
     public static final short INIT_ERR_INVALID_USERNAME = 7;
+    public static final short INIT_ERR_INVALID_TOKEN = 8;
 
     public static final short REQUEST_CMD_GET_HOME = 1;
     public static final short REQUEST_CMD_LIST_DIRECTORY = 2;
@@ -71,6 +73,7 @@ public final class CloudCommon {
     public static final short REQUEST_CMD_COPY_NODE = 21;
     public static final short REQUEST_CMD_MOVE_NODE = 22;
     public static final short REQUEST_CMD_RENAME_NODE = 23;
+    public static final short REQUEST_CMD_GET_TOKEN = 24;
 
     public static final short REQUEST_OK = 0;
     public static final short REQUEST_ERR_BODY_TOO_LARGE = 1;

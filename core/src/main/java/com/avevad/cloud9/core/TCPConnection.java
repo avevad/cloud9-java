@@ -6,11 +6,15 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 public final class TCPConnection implements CloudConnection {
+    private final String host;
+    private final int port;
     private final Socket socket;
     private final InputStream in;
     private final OutputStream out;
 
     public TCPConnection(String host, int port) throws IOException {
+        this.host = host;
+        this.port = port;
         socket = new Socket(host, port);
         in = socket.getInputStream();
         out = socket.getOutputStream();
@@ -38,6 +42,11 @@ public final class TCPConnection implements CloudConnection {
     @Override
     public boolean isOpen() {
         return !socket.isClosed();
+    }
+
+    @Override
+    public CloudConnection reconnect() throws IOException {
+        return new TCPConnection(host, port);
     }
 
     @Override

@@ -21,6 +21,8 @@ public interface CloudConnection {
 
     boolean isOpen();
 
+    CloudConnection reconnect() throws IOException;
+
     void close();
 
     final class Helper {

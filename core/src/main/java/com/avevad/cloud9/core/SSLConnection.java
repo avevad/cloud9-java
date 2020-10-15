@@ -7,11 +7,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class SSLConnection implements CloudConnection {
+    private final String host;
+    private final int port;
     private final SSLSocket socket;
     private final InputStream in;
     private final OutputStream out;
 
     public SSLConnection(String host, int port) throws IOException {
+        this.host = host;
+        this.port = port;
         socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(host, port);
         socket.startHandshake();
         in = socket.getInputStream();
@@ -39,6 +43,11 @@ public class SSLConnection implements CloudConnection {
     @Override
     public boolean isOpen() {
         return !socket.isClosed();
+    }
+
+    @Override
+    public CloudConnection reconnect() throws IOException {
+        return new SSLConnection(host, port);
     }
 
     @Override

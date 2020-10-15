@@ -45,9 +45,20 @@ public final class CloudClient {
         sendString(connection, password);
         connection.flush();
         short status = recvInt16(connection);
-        if (status != INIT_OK) {
-            throw new InitException(status);
-        }
+        if (status != INIT_OK) throw new InitException(status);
+        listener.start();
+    }
+
+    public CloudClient(CloudClient client) throws IOException, InitException, ProtocolException, RequestException {
+        listener = new Thread(this::listenerRoutine);
+        this.connection = client.connection.reconnect();
+        negotiate();
+        sendInt16(connection, INIT_CMD_TOKEN);
+        sendInt64(connection, NODE_ID_SIZE);
+        client.getToken().sendNode(connection);
+        connection.flush();
+        short status = recvInt16(connection);
+        if (status != INIT_OK) throw new InitException(status);
         listener.start();
     }
 
@@ -445,6 +456,18 @@ public final class CloudClient {
                     done += sent;
                 }
             }
+        }
+    }
+
+    public Node getToken() throws IOException, RequestException {
+        synchronized (apiLock) {
+            sendInt32(connection, ++lastId);
+            sendInt16(connection, REQUEST_CMD_GET_TOKEN);
+            sendInt64(connection, 0);
+            connection.flush();
+            ServerResponse response = waitResponse(lastId);
+            if (response.status != REQUEST_OK) throw new RequestException(response.status);
+            return Node.bufRecvNode(response.body, 0);
         }
     }
 
