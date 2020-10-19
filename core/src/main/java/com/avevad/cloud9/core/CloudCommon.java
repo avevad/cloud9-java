@@ -162,7 +162,7 @@ public final class CloudCommon {
         }
     }
 
-    enum NodeType {
+    public enum NodeType {
         FILE(0), DIRECTORY(1);
 
         public final byte id;

@@ -128,6 +128,10 @@ public final class CloudClient {
         }
     }
 
+    public void close() {
+        connection.close();
+    }
+
     private ServerResponse singleNodeRequest(short cmd, Node node) throws IOException, RequestException {
         synchronized (apiLock) {
             sendInt32(connection, ++lastId);
@@ -484,11 +488,11 @@ public final class CloudClient {
     }
 
     public interface ReadDataCallback {
-        void call(int size);
+        void call(int size) throws IOException;
     }
 
     public interface WriteDataCallback {
-        int call();
+        int call() throws IOException;
     }
 
     public static final class ProtocolException extends Exception {
