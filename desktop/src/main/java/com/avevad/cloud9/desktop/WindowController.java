@@ -6,9 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 import static com.avevad.cloud9.desktop.DesktopCommon.*;
 
@@ -18,6 +16,7 @@ public final class WindowController {
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final HomeTabPanel home = new HomeTabPanel(this);
     private final java.util.List<TabController> tabs = new LinkedList<>();
+    private final Map<String, JRadioButtonMenuItem> lafButtons = new HashMap<>();
 
     public WindowController(MainController mainController, boolean first) {
         this.mainController = mainController;
@@ -33,18 +32,23 @@ public final class WindowController {
         JMenuItem exitMenuItem = new JMenuItem(string(STRING_EXIT));
         exitMenuItem.addActionListener(e -> mainController.closeAllWindows());
 
+        JMenuItem newWindowMenuItem = new JMenuItem(string(STRING_NEW_WINDOW));
+        newWindowMenuItem.addActionListener(e -> mainController.newWindow());
+
         JMenu fileMenu = new JMenu(string(STRING_FILE));
+        fileMenu.add(newWindowMenuItem);
         fileMenu.add(exitMenuItem);
 
         JMenu lafSubmenu = new JMenu(string(STRING_LOOK_AND_FEEL));
         ButtonGroup lafGroup = new ButtonGroup();
         for (Pair<String, String> laf : iterateLafs()) {
             JRadioButtonMenuItem item = new JRadioButtonMenuItem(laf.b);
+            lafButtons.put(laf.a, item);
             item.setSelected(UIManager.getLookAndFeel().getClass().getCanonicalName().equals(laf.a));
             item.addActionListener(e -> {
                 try {
                     UIManager.setLookAndFeel(laf.a);
-                    mainController.updateLaf();
+                    mainController.updateLaf(laf.a);
                     getConfig().lookAndFeel = laf.a;
                     saveConfig();
                 } catch (ClassNotFoundException | UnsupportedLookAndFeelException | IllegalAccessException | InstantiationException ex) {
@@ -119,6 +123,11 @@ public final class WindowController {
         for (int i = tabs.size() - 1; i >= 0; i--) closeTab(tabs.get(i));
     }
 
+
+    public void updateLaf(String name) {
+        SwingUtilities.updateComponentTreeUI(frame);
+        lafButtons.get(name).setSelected(true);
+    }
 
     public void setVisible(boolean visible) {
         frame.setVisible(visible);

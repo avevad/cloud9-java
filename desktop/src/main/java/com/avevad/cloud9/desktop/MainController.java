@@ -31,7 +31,7 @@ public final class MainController {
         while (!windows.isEmpty()) closeWindow(windows.get(windows.size() - 1));
     }
 
-    public void updateLaf() {
-        for (WindowController windowController : windows) SwingUtilities.updateComponentTreeUI(windowController.frame);
+    public void updateLaf(String name) {
+        for (WindowController windowController : windows) windowController.updateLaf(name);
     }
 }
