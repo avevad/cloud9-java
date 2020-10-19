@@ -3,6 +3,7 @@ package com.avevad.cloud9.desktop;
 import com.avevad.cloud9.core.CloudClient;
 import com.avevad.cloud9.core.util.Holder;
 import com.avevad.cloud9.core.util.TaskQueue;
+import com.avevad.cloud9.desktop.tasks.UploadTask;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -11,7 +12,6 @@ import java.awt.event.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static com.avevad.cloud9.core.CloudCommon.*;
@@ -21,7 +21,6 @@ public final class TabController {
     private static final String NAVIGATE = "navigate";
     public final WindowController windowController;
     private final CloudClient controlClient;
-    private CloudClient dataClient = null;
     private TasksPanel tasksPanel = new TasksPanel();
     public final JPanel root = new JPanel();
     private final JSplitPane splitPane;
@@ -239,72 +238,15 @@ public final class TabController {
 
         JMenuItem uploadPopupItem = new JMenuItem(string(STRING_UPLOAD));
         uploadPopupItem.addActionListener(e -> {
-            Holder<Boolean> suspended = new Holder<>(false);
-            Holder<Boolean> cancelled = new Holder<>(false);
-            final Object lock = new Object();
-            TasksPanel.TaskCallback callback = tasksPanel.addTask("Test task " + new Date(), new TasksPanel.TaskController() {
-                @Override
-                public void suspend() {
-                    suspended.value = true;
-                }
-
-                @Override
-                public void cancel() {
-                    cancelled.value = true;
-                }
-
-                @Override
-                public void resume() {
-                    synchronized (lock) {
-                        suspended.value = false;
-                        lock.notifyAll();
-                    }
-                }
-            });
-            if (splitPane.getDividerLocation() == splitPane.getWidth())
-                splitPane.setDividerLocation(splitPane.getLastDividerLocation());
-            callback.setStatus("Pending");
-            dataQueue.submit(() -> {
-                long n = 20;
-                long d = 300;
-                for (int i = 0; i < n; i++) {
-                    try {
-                        Thread.sleep(d);
-                    } catch (InterruptedException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                    double progress = (i + 1) / (double) n;
-                    String status = "Running " + (i + 1) + "/" + n;
-                    SwingUtilities.invokeLater(() -> {
-                        callback.setProgress(progress);
-                        callback.setStatus(status);
-                    });
-                    if (cancelled.value) {
-                        SwingUtilities.invokeLater(() -> {
-                            callback.setStatus("Cancelled");
-                            callback.setFinished();
-                        });
-                        return;
-                    }
-                    if (suspended.value) {
-                        SwingUtilities.invokeLater(() -> callback.setSuspended(true));
-                        synchronized (lock) {
-                            while (suspended.value) {
-                                try {
-                                    lock.wait();
-                                } catch (InterruptedException ex) {
-                                    throw new RuntimeException(ex);
-                                }
-                            }
-                        }
-                        SwingUtilities.invokeLater(() -> callback.setSuspended(false));
-                    }
-                }
-                SwingUtilities.invokeLater(() -> {
-                    callback.setStatus("Finished");
-                    callback.setFinished();
-                });
-            });
+            JFileChooser chooser = new JFileChooser();
+            chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+            chooser.setMultiSelectionEnabled(true);
+            if (chooser.showOpenDialog(windowController.frame) == JFileChooser.APPROVE_OPTION) {
+                showTasksPanel();
+                UploadTask task = new UploadTask(controlClient, chooser.getSelectedFiles(), node);
+                TasksPanel.TaskCallback callback = tasksPanel.addTask(string(STRING_TASK_UPLOAD, path), task);
+                dataQueue.submit(task.start(callback));
+            }
         });
         tablePopup.add(uploadPopupItem);
 
@@ -320,13 +262,17 @@ public final class TabController {
         });
     }
 
+    private void showTasksPanel() {
+        if (splitPane.getDividerLocation() > splitPane.getLastDividerLocation())
+            splitPane.setDividerLocation(splitPane.getLastDividerLocation());
+    }
+
     public void init() {
         SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(1f));
     }
 
     public void destroy() {
         controlClient.disconnect();
-        if (dataClient != null) dataClient.disconnect();
     }
 
     private final class CloudTableModel extends AbstractTableModel {

@@ -27,6 +27,7 @@ public final class TasksPanel {
 
         JScrollPane scroller = new JScrollPane();
         scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         panel.add(scroller, BorderLayout.CENTER);
 
         JPanel wrapper = new JPanel();
@@ -68,7 +69,7 @@ public final class TasksPanel {
         c.gridx = c.gridy = 0;
         row.add(nameLabel, c);
 
-        JLabel statusLabel = new JLabel(name);
+        JLabel statusLabel = new JLabel(string(STRING_PENDING));
         c.gridwidth = 1;
         c.gridheight = 1;
         c.gridx = 0;

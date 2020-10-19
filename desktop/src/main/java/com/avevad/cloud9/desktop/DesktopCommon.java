@@ -17,6 +17,8 @@ public final class DesktopCommon {
     private DesktopCommon() {
     }
 
+    public static final int BUFFER_SIZE = 640 * 1024; // 640 KiB
+
     private static final String HOME_DIR = "Cloud9";
 
     public static File getHomeDir() {
@@ -101,6 +103,13 @@ public final class DesktopCommon {
     public static final String STRING_LOOK_AND_FEEL = "look_and_feel";
     public static final String STRING_TASKS = "tasks";
     public static final String STRING_UPLOAD = "upload";
+    public static final String STRING_PENDING = "pending";
+    public static final String STRING_PREPARING = "preparing";
+    public static final String STRING_CANCELLED = "cancelled";
+    public static final String STRING_SUSPENDED = "suspended";
+    public static final String STRING_COMPLETED = "completed";
+    public static final String STRING_UPLOADING = "uploading";
+    public static final String STRING_TASK_UPLOAD = "task_upload";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";
