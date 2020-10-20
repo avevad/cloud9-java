@@ -103,7 +103,6 @@ public final class WindowController {
         JLabel tabHeader = new JLabel(title + " ");
         tabPanel.add(tabHeader, BorderLayout.CENTER);
         JButton tabCloseButton = new JButton(resizeHeight(icon(ICON_CROSS), tabHeader.getFontMetrics(tabHeader.getFont()).getHeight()));
-        makeBorderless(tabCloseButton);
         tabCloseButton.addActionListener(e -> closeTab(tabController));
         tabPanel.add(tabCloseButton, BorderLayout.LINE_END);
         tabbedPane.setTabComponentAt(tabs.size(), tabPanel);

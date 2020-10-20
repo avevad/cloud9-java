@@ -202,9 +202,4 @@ public final class DesktopCommon {
         img.getGraphics().drawImage(icon.getImage(), 0, 0, width, height, null);
         return new ImageIcon(img);
     }
-
-    public static void makeBorderless(JButton button) {
-        button.setBorderPainted(false);
-        button.setContentAreaFilled(false);
-    }
 }

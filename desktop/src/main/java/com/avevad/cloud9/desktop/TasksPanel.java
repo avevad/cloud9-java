@@ -26,7 +26,7 @@ public final class TasksPanel {
         panel.add(header, BorderLayout.NORTH);
 
         JScrollPane scroller = new JScrollPane();
-        scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         panel.add(scroller, BorderLayout.CENTER);
 
@@ -85,7 +85,6 @@ public final class TasksPanel {
 
         Holder<Boolean> suspended = new Holder<>(false);
         JButton suspendResumeButton = new JButton(suspendIcon);
-        makeBorderless(suspendResumeButton);
         c.gridx = 1;
         c.gridy = 0;
         c.gridwidth = 1;
@@ -99,7 +98,6 @@ public final class TasksPanel {
 
         Holder<Boolean> finished = new Holder<>(false);
         JButton cancelRemoveButton = new JButton(cancelIcon);
-        makeBorderless(cancelRemoveButton);
         c.gridx = 1;
         c.gridy = 2;
         c.gridwidth = 1;
