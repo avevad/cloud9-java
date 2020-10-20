@@ -244,7 +244,7 @@ public final class TabController {
             if (chooser.showOpenDialog(windowController.frame) == JFileChooser.APPROVE_OPTION) {
                 showTasksPanel();
                 UploadTask task = new UploadTask(controlClient, chooser.getSelectedFiles(), node);
-                TasksPanel.TaskCallback callback = tasksPanel.addTask(string(STRING_TASK_UPLOAD, path), task);
+                TasksPanel.TaskCallback callback = tasksPanel.addTask(string(STRING_TASK_UPLOAD), task);
                 dataQueue.submit(task.start(callback));
             }
         });
