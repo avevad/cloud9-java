@@ -14,14 +14,21 @@ public abstract class SimpleTaskBase implements TasksPanel.TaskController {
     private boolean cancelled = false;
     private final Object lock = new Object();
     protected TasksPanel.TaskCallback callback = null;
+    private final Runnable cancelHandler;
 
-    public SimpleTaskBase(CloudClient client) {
+    public SimpleTaskBase(CloudClient client, Runnable cancelHandler) {
+        this.cancelHandler = cancelHandler;
         CloudClient newClient = null;
         try {
             newClient = new CloudClient(client);
         } catch (IOException | CloudClient.InitException | CloudClient.ProtocolException | CloudClient.RequestException ignored) {
         }
         this.client = newClient;
+    }
+
+    public SimpleTaskBase(CloudClient client) {
+        this(client, () -> {
+        });
     }
 
     public abstract void run() throws IOException, CloudClient.RequestException;
