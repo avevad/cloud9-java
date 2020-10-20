@@ -111,6 +111,9 @@ public final class DesktopCommon {
     public static final String STRING_UPLOADING = "uploading";
     public static final String STRING_TASK_UPLOAD = "task_upload";
     public static final String STRING_NEW_WINDOW = "new_window";
+    public static final String STRING_TASK_DELETE = "task_delete";
+    public static final String STRING_REMOVING = "removing";
+    public static final String STRING_DELETE = "delete";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";

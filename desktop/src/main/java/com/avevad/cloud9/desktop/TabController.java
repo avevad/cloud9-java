@@ -3,6 +3,7 @@ package com.avevad.cloud9.desktop;
 import com.avevad.cloud9.core.CloudClient;
 import com.avevad.cloud9.core.util.Holder;
 import com.avevad.cloud9.core.util.TaskQueue;
+import com.avevad.cloud9.desktop.tasks.DeleteTask;
 import com.avevad.cloud9.desktop.tasks.UploadTask;
 
 import javax.swing.*;
@@ -187,6 +188,31 @@ public final class TabController {
         c.gridx++;
         navPanel.add(parentButton, c);
 
+        JMenuItem deleteMenuItem = new JMenuItem(string(STRING_DELETE));
+        deleteMenuItem.addActionListener(e -> {
+            int[] rows = table.getSelectedRows();
+            Node[] nodes = new Node[rows.length];
+            for (int pos = 0; pos < nodes.length; pos++) nodes[pos] = content.get(rows[pos]).node;
+            DeleteTask task = new DeleteTask(controlClient, nodes);
+            TasksPanel.TaskCallback callback = tasksPanel.addTask(string(STRING_TASK_DELETE), task);
+            showTasksPanel();
+            dataQueue.submit(task.start(callback));
+        });
+        tablePopup.add(deleteMenuItem);
+
+        JMenuItem uploadPopupItem = new JMenuItem(string(STRING_UPLOAD));
+        uploadPopupItem.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+            chooser.setMultiSelectionEnabled(true);
+            if (chooser.showOpenDialog(windowController.frame) == JFileChooser.APPROVE_OPTION) {
+                UploadTask task = new UploadTask(controlClient, chooser.getSelectedFiles(), node);
+                TasksPanel.TaskCallback callback = tasksPanel.addTask(string(STRING_TASK_UPLOAD), task);
+                showTasksPanel();
+                dataQueue.submit(task.start(callback));
+            }
+        });
+        tablePopup.add(uploadPopupItem);
 
         table.setFillsViewportHeight(true);
         table.setModel(tableModel);
@@ -216,7 +242,10 @@ public final class TabController {
             }
 
             private void showPopup(MouseEvent e) {
-                if (e.isPopupTrigger()) tablePopup.show(e.getComponent(), e.getX(), e.getY());
+                if (e.isPopupTrigger()) {
+                    setPopupItemsVisibility(table.getSelectedRowCount() > 0, deleteMenuItem);
+                    tablePopup.show(e.getComponent(), e.getX(), e.getY());
+                }
             }
         });
         KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
@@ -236,20 +265,6 @@ public final class TabController {
 
         cardLayout.show(panel, CARD_CONTENT);
 
-        JMenuItem uploadPopupItem = new JMenuItem(string(STRING_UPLOAD));
-        uploadPopupItem.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-            chooser.setMultiSelectionEnabled(true);
-            if (chooser.showOpenDialog(windowController.frame) == JFileChooser.APPROVE_OPTION) {
-                showTasksPanel();
-                UploadTask task = new UploadTask(controlClient, chooser.getSelectedFiles(), node);
-                TasksPanel.TaskCallback callback = tasksPanel.addTask(string(STRING_TASK_UPLOAD), task);
-                dataQueue.submit(task.start(callback));
-            }
-        });
-        tablePopup.add(uploadPopupItem);
-
         controlQueue.submit(() -> {
             try {
                 navigate(controlClient.getHome(), path);
@@ -260,6 +275,10 @@ public final class TabController {
                 throw new RuntimeException();
             }
         });
+    }
+
+    private void setPopupItemsVisibility(boolean visibility, JMenuItem... items) {
+        for (JMenuItem item : items) item.setVisible(visibility);
     }
 
     private void showTasksPanel() {
