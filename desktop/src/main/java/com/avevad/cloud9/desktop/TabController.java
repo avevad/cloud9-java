@@ -19,7 +19,11 @@ import static com.avevad.cloud9.core.CloudCommon.*;
 import static com.avevad.cloud9.desktop.DesktopCommon.*;
 
 public final class TabController {
-    private static final String NAVIGATE = "navigate";
+    private static final KeyStroke
+            STROKE_DELETE = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
+            STROKE_UPLOAD = KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK),
+            STROKE_GO_UP = KeyStroke.getKeyStroke("alt UP"),
+            STROKE_UPDATE = KeyStroke.getKeyStroke("F5");
     public final WindowController windowController;
     private final CloudClient controlClient;
     private TasksPanel tasksPanel = new TasksPanel();
@@ -161,47 +165,51 @@ public final class TabController {
         c.gridx++;
         navPanel.add(goButton, c);
 
-        parentButton.setIcon(resizeHeight(icon(ICON_OUTWARDS), pathField.getFontMetrics(pathField.getFont()).getHeight()));
-        parentButton.addActionListener(e -> {
-            controlQueue.submit(() -> {
-                try {
-                    Node parent = this.controlClient.getNodeParent(node);
-                    String newPath = path;
-                    while (newPath.endsWith(String.valueOf(CLOUD_PATH_SEP)))
-                        newPath = newPath.substring(0, newPath.length() - 1);
-                    newPath = newPath.substring(0, path.lastIndexOf(CLOUD_PATH_SEP));
-                    navigate(parent, newPath);
-                } catch (IOException ex) {
-                    SwingUtilities.invokeLater(() -> {
-                        netErrorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
-                        cardLayout.show(panel, CARD_NET_ERROR);
-                    });
-                } catch (CloudClient.RequestException ex) {
-                    SwingUtilities.invokeLater(() -> {
-                        reqErrorLabel.setText(string(STRING_REQUEST_ERROR, string(initStatusString(ex.status))));
-                        tableLayout.show(tablePanel, CARD_REQ_ERROR);
-                    });
-                }
-            });
+        ActionListener parentButtonTask = e -> controlQueue.submit(() -> {
+            if (!parentButton.isEnabled()) return;
+            try {
+                Node parent = this.controlClient.getNodeParent(node);
+                String newPath = path;
+                while (newPath.endsWith(String.valueOf(CLOUD_PATH_SEP)))
+                    newPath = newPath.substring(0, newPath.length() - 1);
+                newPath = newPath.substring(0, path.lastIndexOf(CLOUD_PATH_SEP));
+                navigate(parent, newPath);
+            } catch (IOException ex) {
+                SwingUtilities.invokeLater(() -> {
+                    netErrorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
+                    cardLayout.show(panel, CARD_NET_ERROR);
+                });
+            } catch (CloudClient.RequestException ex) {
+                SwingUtilities.invokeLater(() -> {
+                    reqErrorLabel.setText(string(STRING_REQUEST_ERROR, string(initStatusString(ex.status))));
+                    tableLayout.show(tablePanel, CARD_REQ_ERROR);
+                });
+            }
         });
+        parentButton.setIcon(resizeHeight(icon(ICON_OUTWARDS), pathField.getFontMetrics(pathField.getFont()).getHeight()));
+        parentButton.addActionListener(parentButtonTask);
         parentButton.setToolTipText(string(STRING_GO_UP));
         c.gridx++;
         navPanel.add(parentButton, c);
 
-        JMenuItem deleteMenuItem = new JMenuItem(string(STRING_DELETE));
-        deleteMenuItem.addActionListener(e -> {
+        JMenuItem deleteMenuItem = new JMenuItem(string(STRING_DELETE), KeyEvent.VK_DELETE);
+        deleteMenuItem.setVisible(false);
+        ActionListener deleteTask = e -> {
             int[] rows = table.getSelectedRows();
+            if (rows.length == 0) return;
             Node[] nodes = new Node[rows.length];
             for (int pos = 0; pos < nodes.length; pos++) nodes[pos] = content.get(rows[pos]).node;
             DeleteTask task = new DeleteTask(controlClient, nodes);
             TasksPanel.TaskCallback callback = tasksPanel.addTask(string(STRING_TASK_DELETE), task);
             showTasksPanel();
             dataQueue.submit(task.start(callback));
-        });
+        };
+        deleteMenuItem.setAccelerator(STROKE_DELETE);
+        deleteMenuItem.addActionListener(deleteTask);
         tablePopup.add(deleteMenuItem);
 
         JMenuItem uploadPopupItem = new JMenuItem(string(STRING_UPLOAD));
-        uploadPopupItem.addActionListener(e -> {
+        ActionListener uploadTask = e -> {
             JFileChooser chooser = new JFileChooser();
             chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
             chooser.setMultiSelectionEnabled(true);
@@ -211,14 +219,19 @@ public final class TabController {
                 showTasksPanel();
                 dataQueue.submit(task.start(callback));
             }
-        });
+        };
+        uploadPopupItem.setAccelerator(STROKE_UPLOAD);
+        uploadPopupItem.addActionListener(uploadTask);
         tablePopup.add(uploadPopupItem);
 
+        table.getSelectionModel().addListSelectionListener(e -> {
+            setPopupItemsVisibility(table.getSelectedRowCount() > 0, deleteMenuItem);
+        });
         table.setFillsViewportHeight(true);
         table.setModel(tableModel);
         table.getColumn(string(STRING_FILE_TYPE)).setMaxWidth(tableModel.fileIcon.getIconWidth());
         table.getColumn(string(STRING_FILE_TYPE)).setMinWidth(tableModel.fileIcon.getIconWidth());
-        Runnable rowSelectTask = () -> {
+        ActionListener rowSelectTask = e -> {
             int row = table.getSelectionModel().getAnchorSelectionIndex();
             if (row == -1) return;
             if (content.get(row).type == NODE_TYPE_DIRECTORY)
@@ -227,7 +240,7 @@ public final class TabController {
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) rowSelectTask.run();
+                if (e.getClickCount() == 2) rowSelectTask.actionPerformed(null);
             }
         });
         table.addMouseListener(new MouseAdapter() {
@@ -242,18 +255,7 @@ public final class TabController {
             }
 
             private void showPopup(MouseEvent e) {
-                if (e.isPopupTrigger()) {
-                    setPopupItemsVisibility(table.getSelectedRowCount() > 0, deleteMenuItem);
-                    tablePopup.show(e.getComponent(), e.getX(), e.getY());
-                }
-            }
-        });
-        KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
-        table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enter, NAVIGATE);
-        table.getActionMap().put(NAVIGATE, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                rowSelectTask.run();
+                if (e.isPopupTrigger()) tablePopup.show(e.getComponent(), e.getX(), e.getY());
             }
         });
         table.addFocusListener(new FocusAdapter() {
@@ -261,6 +263,16 @@ public final class TabController {
             public void focusGained(FocusEvent e) {
                 pathField.setText(path);
             }
+        });
+
+        bindAction(table, "popup", KeyStroke.getKeyStroke(KeyEvent.VK_CONTEXT_MENU, 0), e -> tablePopup.show(table, 0, 0));
+        bindAction(table, "navigate", KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), rowSelectTask);
+        bindAction(table, "delete", STROKE_DELETE, deleteTask);
+        bindAction(table, "upload", STROKE_UPLOAD, uploadTask);
+        bindAction(contentPanel, "go_up", STROKE_GO_UP, parentButtonTask);
+        bindAction(contentPanel, "update", STROKE_UPDATE, e -> {
+            pathField.setText(path);
+            goListener.actionPerformed(e);
         });
 
         cardLayout.show(panel, CARD_CONTENT);

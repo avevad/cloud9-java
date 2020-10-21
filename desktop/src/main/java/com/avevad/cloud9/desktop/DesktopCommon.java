@@ -7,6 +7,8 @@ import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
@@ -201,5 +203,23 @@ public final class DesktopCommon {
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         img.getGraphics().drawImage(icon.getImage(), 0, 0, width, height, null);
         return new ImageIcon(img);
+    }
+
+    public static void bindAction(JComponent component, String name, KeyStroke keyStroke, ActionListener listener) {
+        component.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(keyStroke, name);
+        component.getActionMap().put(name, new AbstractActionListener(listener));
+    }
+
+    private static class AbstractActionListener extends AbstractAction {
+        private final ActionListener listener;
+
+        public AbstractActionListener(ActionListener listener) {
+            this.listener = listener;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            listener.actionPerformed(e);
+        }
     }
 }

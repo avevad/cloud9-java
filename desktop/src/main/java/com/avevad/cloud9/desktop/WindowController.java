@@ -11,11 +11,16 @@ import java.util.*;
 import static com.avevad.cloud9.desktop.DesktopCommon.*;
 
 public final class WindowController {
+    private static final KeyStroke
+            STROKE_NEW_TAB = KeyStroke.getKeyStroke("ctrl T"),
+            STROKE_CLOSE_TAB = KeyStroke.getKeyStroke("ctrl W"),
+            STROKE_NEW_WINDOW = KeyStroke.getKeyStroke("ctrl N"),
+            STROKE_EXIT = KeyStroke.getKeyStroke("ctrl Q");
     public final MainController mainController;
     public final JFrame frame = new JFrame();
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final HomeTabPanel home = new HomeTabPanel(this);
-    private final java.util.List<TabController> tabs = new LinkedList<>();
+    private final java.util.List<TabController> tabs = new ArrayList<>();
     private final Map<String, JRadioButtonMenuItem> lafButtons = new HashMap<>();
 
     public WindowController(MainController mainController, boolean first) {
@@ -31,9 +36,11 @@ public final class WindowController {
 
         JMenuItem exitMenuItem = new JMenuItem(string(STRING_EXIT));
         exitMenuItem.addActionListener(e -> mainController.closeAllWindows());
+        exitMenuItem.setAccelerator(STROKE_EXIT);
 
         JMenuItem newWindowMenuItem = new JMenuItem(string(STRING_NEW_WINDOW));
         newWindowMenuItem.addActionListener(e -> mainController.newWindow());
+        newWindowMenuItem.setAccelerator(STROKE_NEW_WINDOW);
 
         JMenu fileMenu = new JMenu(string(STRING_FILE));
         fileMenu.add(newWindowMenuItem);
@@ -87,6 +94,12 @@ public final class WindowController {
         frame.pack();
         frame.setMinimumSize(new Dimension(frame.getWidth() + 5, frame.getHeight() + 5));
         if (first) frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+
+        bindAction(tabbedPane, "new_tab", STROKE_NEW_TAB, e -> tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1));
+        bindAction(tabbedPane, "close_tab", STROKE_CLOSE_TAB, e -> {
+            int index = tabbedPane.getSelectedIndex();
+            if (index != tabbedPane.getTabCount() - 1) closeTab(tabs.get(index));
+        });
     }
 
     public void dispose() {
