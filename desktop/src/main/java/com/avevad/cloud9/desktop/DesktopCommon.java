@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 import static com.avevad.cloud9.core.CloudCommon.*;
 
@@ -20,14 +21,6 @@ public final class DesktopCommon {
     }
 
     public static final int BUFFER_SIZE = 640 * 1024; // 640 KiB
-
-    private static final String HOME_DIR = "Cloud9";
-
-    public static File getHomeDir() {
-        return new File(System.getProperty("user.home"), HOME_DIR);
-    }
-
-    public static final String CONFIG_FILE = "config.bin";
 
     public static final String STRINGS_BUNDLE = "assets/bundles/strings";
     private static final ResourceBundle stringsBundle = ResourceBundle.getBundle(STRINGS_BUNDLE);
@@ -84,7 +77,7 @@ public final class DesktopCommon {
     public static final String STRING_CONNECTING = "connecting";
     public static final String STRING_NET_CONNECTION_FAILED = "net_connection_failed";
     public static final String STRING_CLOUD_CONNECTION_FAILED = "cloud_connection_failed";
-    public static final String STRING_ERROR = "error";
+    public static final String STRING_ERROR_TITLE = "error_title";
     public static final String STRING_UNKNOWN_HOST = "unknown_host";
     public static final String STRING_NEGOTIATION_ERROR = "negotiation_error";
     public static final String STRING_SECURE_CONNECTION = "secure_connection";
@@ -116,6 +109,12 @@ public final class DesktopCommon {
     public static final String STRING_TASK_DELETE = "task_delete";
     public static final String STRING_REMOVING = "removing";
     public static final String STRING_DELETE = "delete";
+    public static final String STRING_DOWNLOADS = "downloads";
+    public static final String STRING_ERROR = "error";
+    public static final String STRING_FILE_EXISTS = "file_exists";
+    public static final String STRING_SAVE = "save";
+    public static final String STRING_TASK_DOWNLOAD = "task_download";
+    public static final String STRING_DOWNLOADING = "downloading";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";
@@ -182,6 +181,16 @@ public final class DesktopCommon {
     }
 
 
+    private static final String HOME_DIR = "Cloud9";
+
+    public static File getHomeDir() {
+        return new File(System.getProperty("user.home"), HOME_DIR);
+    }
+
+    public static final String CONFIG_FILE = "config.bin";
+    public static final String DOWNLOADS_DIR = string(STRING_DOWNLOADS);
+
+
     public static final String ICONS_PATH = "/assets/icons/";
 
     public static final String ICON_FOLDER = "folder.png";
@@ -208,6 +217,17 @@ public final class DesktopCommon {
     public static void bindAction(JComponent component, String name, KeyStroke keyStroke, ActionListener listener) {
         component.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(keyStroke, name);
         component.getActionMap().put(name, new AbstractActionListener(listener));
+    }
+
+    public static String renameCopy(String name, Predicate<String> existence) {
+        int pos = name.lastIndexOf('.');
+        String baseName = pos == -1 ? name : name.substring(0, pos);
+        String format = pos == -1 ? "" : name.substring(pos);
+        int num = 0;
+        while (existence.test(name)) {
+            name = baseName + " (" + ++num + ")" + format;
+        }
+        return name;
     }
 
     private static class AbstractActionListener extends AbstractAction {

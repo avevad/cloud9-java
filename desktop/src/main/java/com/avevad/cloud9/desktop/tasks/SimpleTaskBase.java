@@ -38,7 +38,7 @@ public abstract class SimpleTaskBase implements TasksPanel.TaskController {
         this.callback = callback;
         return () -> {
             if (client == null) {
-                SwingUtilities.invokeLater(() -> callback.setStatus(string(STRING_ERROR)));
+                SwingUtilities.invokeLater(() -> callback.setStatus(string(STRING_ERROR_TITLE)));
             } else try {
                 SwingUtilities.invokeLater(() -> callback.setStatus(string(STRING_PREPARING)));
                 run();

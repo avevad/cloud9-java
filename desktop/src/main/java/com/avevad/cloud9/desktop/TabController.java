@@ -2,28 +2,34 @@ package com.avevad.cloud9.desktop;
 
 import com.avevad.cloud9.core.CloudClient;
 import com.avevad.cloud9.core.util.Holder;
+import com.avevad.cloud9.core.util.Pair;
 import com.avevad.cloud9.core.util.TaskQueue;
 import com.avevad.cloud9.desktop.tasks.DeleteTask;
+import com.avevad.cloud9.desktop.tasks.DownloadTask;
 import com.avevad.cloud9.desktop.tasks.UploadTask;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import static com.avevad.cloud9.core.CloudCommon.*;
 import static com.avevad.cloud9.desktop.DesktopCommon.*;
 
 public final class TabController {
+    private static final File DOWNLOADS_DIRECTORY = new File(getHomeDir(), DOWNLOADS_DIR);
     private static final KeyStroke
             STROKE_DELETE = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
             STROKE_UPLOAD = KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK),
             STROKE_GO_UP = KeyStroke.getKeyStroke("alt UP"),
-            STROKE_UPDATE = KeyStroke.getKeyStroke("F5");
+            STROKE_UPDATE = KeyStroke.getKeyStroke("F5"),
+            STROKE_SAVE = KeyStroke.getKeyStroke("ctrl S");
     public final WindowController windowController;
     private final CloudClient controlClient;
     private TasksPanel tasksPanel = new TasksPanel();
@@ -129,23 +135,23 @@ public final class TabController {
                     try {
                         start = Node.fromString(node);
                     } catch (IllegalArgumentException ex) {
-                        JOptionPane.showMessageDialog(windowController.frame, string(STRING_INVALID_NODE_ID, node), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(windowController.frame, string(STRING_INVALID_NODE_ID, node), string(STRING_ERROR_TITLE), JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } else {
-                    JOptionPane.showMessageDialog(windowController.frame, string(STRING_INVALID_PATH, string(STRING_PATH_FORMAT_ALERT)), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(windowController.frame, string(STRING_INVALID_PATH, string(STRING_PATH_FORMAT_ALERT)), string(STRING_ERROR_TITLE), JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 try {
                     navigate(parsePath(this.controlClient, start, path.substring(splitPos)), path);
                 } catch (FileNotFoundException ex) {
-                    JOptionPane.showMessageDialog(windowController.frame, string(STRING_FILE_NOT_FOUND, ex.getMessage()), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(windowController.frame, string(STRING_FILE_NOT_FOUND, ex.getMessage()), string(STRING_ERROR_TITLE), JOptionPane.ERROR_MESSAGE);
                 }
             } catch (IOException ex) {
                 netErrorLabel.setText(string(STRING_CONNECTION_LOST, ex.getLocalizedMessage()));
                 cardLayout.show(panel, CARD_NET_ERROR);
             } catch (CloudClient.RequestException ex) {
-                JOptionPane.showMessageDialog(windowController.frame, string(STRING_REQUEST_ERROR, string(requestStatusString(ex.status))), string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(windowController.frame, string(STRING_REQUEST_ERROR, string(requestStatusString(ex.status))), string(STRING_ERROR_TITLE), JOptionPane.ERROR_MESSAGE);
             }
 
         };
@@ -192,22 +198,6 @@ public final class TabController {
         c.gridx++;
         navPanel.add(parentButton, c);
 
-        JMenuItem deleteMenuItem = new JMenuItem(string(STRING_DELETE), KeyEvent.VK_DELETE);
-        deleteMenuItem.setVisible(false);
-        ActionListener deleteTask = e -> {
-            int[] rows = table.getSelectedRows();
-            if (rows.length == 0) return;
-            Node[] nodes = new Node[rows.length];
-            for (int pos = 0; pos < nodes.length; pos++) nodes[pos] = content.get(rows[pos]).node;
-            DeleteTask task = new DeleteTask(controlClient, nodes);
-            TasksPanel.TaskCallback callback = tasksPanel.addTask(string(STRING_TASK_DELETE), task);
-            showTasksPanel();
-            dataQueue.submit(task.start(callback));
-        };
-        deleteMenuItem.setAccelerator(STROKE_DELETE);
-        deleteMenuItem.addActionListener(deleteTask);
-        tablePopup.add(deleteMenuItem);
-
         JMenuItem uploadPopupItem = new JMenuItem(string(STRING_UPLOAD));
         ActionListener uploadTask = e -> {
             JFileChooser chooser = new JFileChooser();
@@ -224,8 +214,40 @@ public final class TabController {
         uploadPopupItem.addActionListener(uploadTask);
         tablePopup.add(uploadPopupItem);
 
+        JMenuItem savePopupItem = new JMenuItem(string(STRING_SAVE));
+        ActionListener saveTask = e -> {
+            int[] rows = table.getSelectedRows();
+            if (rows.length == 0) return;
+            List<Pair<Node, String>> nodes = new LinkedList<>();
+            for (int row : rows) nodes.add(new Pair<>(content.get(row).node, content.get(row).name));
+            DOWNLOADS_DIRECTORY.mkdir();
+            DownloadTask task = new DownloadTask(controlClient, nodes, DOWNLOADS_DIRECTORY);
+            TasksPanel.TaskCallback callback = tasksPanel.addTask(string(STRING_TASK_DOWNLOAD), task);
+            showTasksPanel();
+            dataQueue.submit(task.start(callback));
+        };
+        savePopupItem.setAccelerator(STROKE_SAVE);
+        savePopupItem.addActionListener(saveTask);
+        tablePopup.add(savePopupItem);
+
+        JMenuItem deleteMenuItem = new JMenuItem(string(STRING_DELETE), KeyEvent.VK_DELETE);
+        deleteMenuItem.setVisible(false);
+        ActionListener deleteTask = e -> {
+            int[] rows = table.getSelectedRows();
+            if (rows.length == 0) return;
+            Node[] nodes = new Node[rows.length];
+            for (int pos = 0; pos < nodes.length; pos++) nodes[pos] = content.get(rows[pos]).node;
+            DeleteTask task = new DeleteTask(controlClient, nodes);
+            TasksPanel.TaskCallback callback = tasksPanel.addTask(string(STRING_TASK_DELETE), task);
+            showTasksPanel();
+            dataQueue.submit(task.start(callback));
+        };
+        deleteMenuItem.setAccelerator(STROKE_DELETE);
+        deleteMenuItem.addActionListener(deleteTask);
+        tablePopup.add(deleteMenuItem);
+
         table.getSelectionModel().addListSelectionListener(e -> {
-            setPopupItemsVisibility(table.getSelectedRowCount() > 0, deleteMenuItem);
+            setPopupItemsVisibility(table.getSelectedRowCount() > 0, deleteMenuItem, savePopupItem);
         });
         table.setFillsViewportHeight(true);
         table.setModel(tableModel);
@@ -274,6 +296,7 @@ public final class TabController {
             pathField.setText(path);
             goListener.actionPerformed(e);
         });
+        bindAction(table, "save", STROKE_SAVE, saveTask);
 
         cardLayout.show(panel, CARD_CONTENT);
 
@@ -376,13 +399,13 @@ public final class TabController {
                 SwingUtilities.invokeLater(() -> {
                     netErrorLabel.setText(string(STRING_CONNECTION_LOST, e.getLocalizedMessage()));
                     cardLayout.show(panel, CARD_NET_ERROR);
-                    statusLabel.setText(string(STRING_ERROR));
+                    statusLabel.setText(string(STRING_ERROR_TITLE));
                 });
             } catch (CloudClient.RequestException e) {
                 SwingUtilities.invokeLater(() -> {
                     reqErrorLabel.setText(string(STRING_REQUEST_ERROR, string(requestStatusString(e.status))));
                     tableLayout.show(tablePanel, CARD_REQ_ERROR);
-                    statusLabel.setText(string(STRING_ERROR));
+                    statusLabel.setText(string(STRING_ERROR_TITLE));
                 });
             }
             SwingUtilities.invokeLater(() -> {

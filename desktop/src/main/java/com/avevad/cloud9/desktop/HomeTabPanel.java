@@ -188,7 +188,7 @@ public final class HomeTabPanel {
                         if (error.value != null)
                             JOptionPane.showMessageDialog(windowController.frame,
                                     string(STRING_CLOUD_CONNECTION_FAILED, error.value),
-                                    string(STRING_ERROR), JOptionPane.ERROR_MESSAGE);
+                                    string(STRING_ERROR_TITLE), JOptionPane.ERROR_MESSAGE);
                         quickButton.setEnabled(true);
                         quickButton.setText(string(STRING_CONNECT));
                         if (controlClient.value != null) windowController.newTab(
