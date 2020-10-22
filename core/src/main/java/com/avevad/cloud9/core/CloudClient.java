@@ -440,7 +440,7 @@ public final class CloudClient {
         }
     }
 
-    public void longWriteFD(byte fd, long size, byte[] buffer, int offset, int bufferSize, WriteDataCallback callback) throws IOException, RequestException {
+    public void longWriteFD(byte fd, long size, byte[] buffer, int offset, WriteDataCallback callback) throws IOException, RequestException {
         synchronized (apiLock) {
             synchronized (ldtmLock) {
                 sendInt32(connection, ++lastId);

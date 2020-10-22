@@ -74,7 +74,7 @@ public class UploadTask extends SimpleTaskBase {
             Node node = client.makeNode(parent, file.getName(), NodeType.FILE);
             byte fd = client.openFD(node, FD_MODE_WRITE);
             FileInputStream fis = new FileInputStream(file);
-            client.longWriteFD(fd, file.length(), buffer, 0, BUFFER_SIZE, () -> updateProgress(fis.read(buffer, 0, BUFFER_SIZE)));
+            client.longWriteFD(fd, file.length(), buffer, 0, () -> updateProgress(fis.read(buffer, 0, BUFFER_SIZE)));
             filesSent++;
             updateStatus();
             client.closeFD(fd);
