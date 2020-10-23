@@ -115,6 +115,7 @@ public final class DesktopCommon {
     public static final String STRING_SAVE = "save";
     public static final String STRING_TASK_DOWNLOAD = "task_download";
     public static final String STRING_DOWNLOADING = "downloading";
+    public static final String STRING_WAIT_FOR_TASKS = "wait_for_tasks";
 
     private static final Map<Short, String> INIT_STATUS_STRINGS = new HashMap<>();
     private static final String STRING_INIT_ERROR_UNKNOWN = "init_error_unknown";

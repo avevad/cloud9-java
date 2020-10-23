@@ -102,10 +102,11 @@ public final class WindowController {
         });
     }
 
-    public void dispose() {
-        closeAllTabs();
+    public boolean dispose() {
+        if (!closeAllTabs()) return false;
         frame.setVisible(false);
         frame.dispose();
+        return true;
     }
 
     public void newTab(TabController tabController, String title, boolean display) {
@@ -124,15 +125,18 @@ public final class WindowController {
         tabController.init();
     }
 
-    public void closeTab(TabController tabController) {
+    public boolean closeTab(TabController tabController) {
         int pos = tabs.indexOf(tabController);
-        tabController.destroy();
+        if (!tabController.destroy()) return false;
         tabbedPane.removeTabAt(pos);
         tabs.remove(pos);
+        return true;
     }
 
-    private void closeAllTabs() {
-        for (int i = tabs.size() - 1; i >= 0; i--) closeTab(tabs.get(i));
+    private boolean closeAllTabs() {
+        boolean ok = true;
+        for (int i = tabs.size() - 1; i >= 0; i--) ok &= closeTab(tabs.get(i));
+        return ok;
     }
 
 

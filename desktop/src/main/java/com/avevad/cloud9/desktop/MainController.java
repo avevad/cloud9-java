@@ -20,15 +20,18 @@ public final class MainController {
         SwingUtilities.invokeLater(() -> windowController.setVisible(true));
     }
 
-    public void closeWindow(WindowController windowController) {
-        if (!windows.contains(windowController)) return;
+    public boolean closeWindow(WindowController windowController) {
+        if (!windowController.dispose()) return false;
         windows.remove(windowController);
-        windowController.dispose();
         if (windows.isEmpty()) SwingUtilities.invokeLater(() -> System.exit(0));
+        return true;
     }
 
-    public void closeAllWindows() {
-        while (!windows.isEmpty()) closeWindow(windows.get(windows.size() - 1));
+    public boolean closeAllWindows() {
+        int pos = windows.size();
+        boolean ok = true;
+        while (pos > 0) ok &= closeWindow(windows.get(--pos));
+        return ok;
     }
 
     public void updateLaf(String name) {

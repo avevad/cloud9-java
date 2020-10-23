@@ -191,9 +191,10 @@ public final class HomeTabPanel {
                                     string(STRING_ERROR_TITLE), JOptionPane.ERROR_MESSAGE);
                         quickButton.setEnabled(true);
                         quickButton.setText(string(STRING_CONNECT));
+                        String title = quickLoginField.getText() + "@" + quickHostField.getText();
                         if (controlClient.value != null) windowController.newTab(
-                                new TabController(windowController, controlClient.value),
-                                quickLoginField.getText() + "@" + quickHostField.getText(), true);
+                                new TabController(title, windowController, controlClient.value),
+                                title, true);
                     });
                 });
             }

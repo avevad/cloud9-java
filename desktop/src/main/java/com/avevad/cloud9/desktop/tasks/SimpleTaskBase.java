@@ -47,7 +47,7 @@ public abstract class SimpleTaskBase implements TasksPanel.TaskController {
             } catch (IOException e) {
                 SwingUtilities.invokeLater(() -> callback.setStatus(string(STRING_CONNECTION_LOST, e.getLocalizedMessage())));
             } catch (CloudClient.RequestException e) {
-                SwingUtilities.invokeLater(() -> callback.setStatus(string(STRING_REQUEST_ERROR, string(initStatusString(e.status)))));
+                SwingUtilities.invokeLater(() -> callback.setStatus(string(STRING_REQUEST_ERROR, string(requestStatusString(e.status)))));
             }
             SwingUtilities.invokeLater(callback::setFinished);
         };

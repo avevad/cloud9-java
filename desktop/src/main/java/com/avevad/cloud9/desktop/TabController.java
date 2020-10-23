@@ -32,6 +32,7 @@ public final class TabController {
             STROKE_SAVE = KeyStroke.getKeyStroke("ctrl S");
     public final WindowController windowController;
     private final CloudClient controlClient;
+    private final String title;
     private TasksPanel tasksPanel = new TasksPanel();
     public final JPanel root = new JPanel();
     private final JSplitPane splitPane;
@@ -61,7 +62,8 @@ public final class TabController {
 
     private final JPopupMenu tablePopup = new JPopupMenu();
 
-    public TabController(WindowController windowController, CloudClient controlClient) {
+    public TabController(String title, WindowController windowController, CloudClient controlClient) {
+        this.title = title;
         GridBagConstraints c;
 
         this.windowController = windowController;
@@ -215,6 +217,7 @@ public final class TabController {
         tablePopup.add(uploadPopupItem);
 
         JMenuItem savePopupItem = new JMenuItem(string(STRING_SAVE));
+        savePopupItem.setVisible(false);
         ActionListener saveTask = e -> {
             int[] rows = table.getSelectedRows();
             if (rows.length == 0) return;
@@ -325,8 +328,13 @@ public final class TabController {
         SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(1f));
     }
 
-    public void destroy() {
+    public boolean destroy() {
+        if (!dataQueue.isEmpty()) {
+            JOptionPane.showMessageDialog(windowController.frame, string(STRING_WAIT_FOR_TASKS), title, JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
         controlClient.disconnect();
+        return true;
     }
 
     private final class CloudTableModel extends AbstractTableModel {

@@ -8,6 +8,8 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.avevad.cloud9.core.CloudCommon.FD_MODE_WRITE;
 import static com.avevad.cloud9.core.CloudCommon.NodeType;
@@ -44,7 +46,7 @@ public class UploadTask extends SimpleTaskBase {
         updateStatus();
         try {
             for (File file : files) {
-                uploadFiles(file, destination);
+                uploadFiles(file, destination, true);
             }
         } catch (IOException e) {
             if (!isCancelled()) throw e;
@@ -64,14 +66,20 @@ public class UploadTask extends SimpleTaskBase {
         } else return 0;
     }
 
-    private void uploadFiles(File file, Node parent) throws IOException, CloudClient.RequestException {
+    private void uploadFiles(File file, Node parent, boolean first) throws IOException, CloudClient.RequestException {
         waitResume();
         if (isCancelled()) return;
+        String name = file.getName();
+        if (first) {
+            Set<String> names = new HashSet<>();
+            client.listDirectory(parent, (childNode, childName) -> names.add(childName));
+            name = renameCopy(name, names::contains);
+        }
         if (file.isDirectory()) {
-            Node dir = client.makeNode(parent, file.getName(), NodeType.DIRECTORY);
-            for (File child : file.listFiles()) uploadFiles(child, dir);
+            Node dir = client.makeNode(parent, name, NodeType.DIRECTORY);
+            for (File child : file.listFiles()) uploadFiles(child, dir, false);
         } else if (file.isFile()) {
-            Node node = client.makeNode(parent, file.getName(), NodeType.FILE);
+            Node node = client.makeNode(parent, name, NodeType.FILE);
             byte fd = client.openFD(node, FD_MODE_WRITE);
             FileInputStream fis = new FileInputStream(file);
             client.longWriteFD(fd, file.length(), buffer, 0, () -> updateProgress(fis.read(buffer, 0, BUFFER_SIZE)));

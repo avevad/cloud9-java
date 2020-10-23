@@ -18,12 +18,16 @@ public final class TaskQueue {
                         while (queue.isEmpty() && !stop) {
                             try {
                                 queue.wait();
-                            } catch (InterruptedException ignored) {}
+                            } catch (InterruptedException ignored) {
+                            }
                         }
-                        if(stop && queue.isEmpty()) return;
-                        task = queue.poll();
+                        if (stop && queue.isEmpty()) return;
+                        task = queue.peek();
                     }
                     task.run();
+                    synchronized (queue) {
+                        queue.poll();
+                    }
                 }
             }, this + "[" + i + "]").start();
     }
@@ -32,11 +36,18 @@ public final class TaskQueue {
         this(name, 1);
     }
 
+    public boolean isEmpty() {
+        synchronized (queue) {
+            return queue.isEmpty();
+        }
+    }
+
     public void stop() {
         synchronized (queue) {
             if (stop) throw new IllegalStateException();
             stop = true;
             queue.notifyAll();
+            queue.clear();
         }
     }
 
