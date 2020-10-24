@@ -10,6 +10,8 @@ import com.avevad.cloud9.desktop.tasks.UploadTask;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -102,7 +104,7 @@ public final class TabController {
         JScrollPane scrollPane = new JScrollPane();
         scrollPane.setViewportView(table);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
         tablePanel.setLayout(tableLayout);
         tablePanel.add(scrollPane, CARD_TABLE);
@@ -221,6 +223,7 @@ public final class TabController {
         ActionListener saveTask = e -> {
             int[] rows = table.getSelectedRows();
             if (rows.length == 0) return;
+            for (int i = 0; i < rows.length; i++) rows[i] = table.convertRowIndexToModel(rows[i]);
             List<Pair<Node, String>> nodes = new LinkedList<>();
             for (int row : rows) nodes.add(new Pair<>(content.get(row).node, content.get(row).name));
             DOWNLOADS_DIRECTORY.mkdir();
@@ -238,6 +241,7 @@ public final class TabController {
         ActionListener deleteTask = e -> {
             int[] rows = table.getSelectedRows();
             if (rows.length == 0) return;
+            for (int i = 0; i < rows.length; i++) rows[i] = table.convertRowIndexToModel(rows[i]);
             Node[] nodes = new Node[rows.length];
             for (int pos = 0; pos < nodes.length; pos++) nodes[pos] = content.get(rows[pos]).node;
             DeleteTask task = new DeleteTask(controlClient, nodes);
@@ -258,6 +262,7 @@ public final class TabController {
         table.getColumn(string(STRING_FILE_TYPE)).setMinWidth(tableModel.fileIcon.getIconWidth());
         ActionListener rowSelectTask = e -> {
             int row = table.getSelectionModel().getAnchorSelectionIndex();
+            row = table.convertRowIndexToModel(row);
             if (row == -1) return;
             if (content.get(row).type == NODE_TYPE_DIRECTORY)
                 navigate(content.get(row).node, path + CLOUD_PATH_SEP + content.get(row).name);
@@ -289,6 +294,9 @@ public final class TabController {
                 pathField.setText(path);
             }
         });
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableModel);
+        table.setRowSorter(sorter);
+        sorter.toggleSortOrder(1);
 
         bindAction(table, "popup", KeyStroke.getKeyStroke(KeyEvent.VK_CONTEXT_MENU, 0), e -> tablePopup.show(table, 0, 0));
         bindAction(table, "navigate", KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), rowSelectTask);
