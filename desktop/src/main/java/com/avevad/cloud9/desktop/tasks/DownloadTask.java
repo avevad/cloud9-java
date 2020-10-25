@@ -58,8 +58,8 @@ public class DownloadTask extends SimpleTaskBase {
     }
 
     private long countFiles(Node node, String name, File dir) throws IOException, CloudClient.RequestException {
-        waitResume();
         if (isCancelled()) return 0;
+        waitResume();
         CloudClient.NodeInfo info = client.getNodeInfo(node);
         name = renameCopy(name, newName -> new File(dir, newName).exists());
         File file = new File(dir, name);

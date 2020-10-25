@@ -54,8 +54,8 @@ public class UploadTask extends SimpleTaskBase {
     }
 
     private long countFiles(File file, Holder<Integer> count) {
-        waitResume();
         if (isCancelled()) return 0;
+        waitResume();
         if (file.isDirectory()) {
             long totalSize = 0;
             for (File child : file.listFiles()) totalSize += countFiles(child, count);
@@ -67,8 +67,8 @@ public class UploadTask extends SimpleTaskBase {
     }
 
     private void uploadFiles(File file, Node parent, boolean first) throws IOException, CloudClient.RequestException {
-        waitResume();
         if (isCancelled()) return;
+        waitResume();
         String name = file.getName();
         if (first) {
             Set<String> names = new HashSet<>();

@@ -24,8 +24,8 @@ public class DeleteTask extends SimpleTaskBase {
         for (Node node : nodes) countFiles(node);
         int removed = 0;
         for (Node node : nodesToDelete) {
-            waitResume();
             if (isCancelled()) return;
+            waitResume();
             client.removeNode(node);
             removed++;
             int finalRemoved = removed;
@@ -37,8 +37,8 @@ public class DeleteTask extends SimpleTaskBase {
     }
 
     private void countFiles(Node node) throws IOException, CloudClient.RequestException {
-        waitResume();
         if (isCancelled()) return;
+        waitResume();
         byte type = client.getNodeInfo(node).type;
         if (type == NODE_TYPE_DIRECTORY) {
             client.listDirectory(node, (child, name) -> countFiles(child));
