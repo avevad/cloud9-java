@@ -101,7 +101,6 @@ public final class DesktopCommon {
     public static final String STRING_PENDING = "pending";
     public static final String STRING_PREPARING = "preparing";
     public static final String STRING_CANCELLED = "cancelled";
-    public static final String STRING_SUSPENDED = "suspended";
     public static final String STRING_COMPLETED = "completed";
     public static final String STRING_UPLOADING = "uploading";
     public static final String STRING_TASK_UPLOAD = "task_upload";
@@ -110,8 +109,6 @@ public final class DesktopCommon {
     public static final String STRING_REMOVING = "removing";
     public static final String STRING_DELETE = "delete";
     public static final String STRING_DOWNLOADS = "downloads";
-    public static final String STRING_ERROR = "error";
-    public static final String STRING_FILE_EXISTS = "file_exists";
     public static final String STRING_SAVE = "save";
     public static final String STRING_TASK_DOWNLOAD = "task_download";
     public static final String STRING_DOWNLOADING = "downloading";

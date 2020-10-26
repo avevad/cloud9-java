@@ -1,12 +1,12 @@
-allprojects{
+allprojects {
     group = 'com.avevad.cloud9'
     version = '0.1-SNAPSHOT'
 }
 
-subprojects{
+subprojects {
     apply plugin: "java"
 
-    compileJava{
+    compileJava {
         options.fork = true
         options.incremental = true
     }

@@ -8,7 +8,6 @@ dependencies {
 }
 
 
-
 task mainJar(type: Jar, dependsOn: classes) {
     manifest {
         attributes(
